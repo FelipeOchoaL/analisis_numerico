@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas de Ecuaciones - Análisis Numérico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .matrix-input {
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            width: 80px;
+        }
+        .matrix-container {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .bracket {
+            font-size: 2em;
+            font-weight: bold;
+            vertical-align: middle;
+            line-height: 1;
+        }
+        .equals-sign {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 0 15px;
+            vertical-align: middle;
+        }
+        .solution-highlight {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .process-output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .dimension-btn {
+            margin: 2px;
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-warning">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-calculator"></i> Análisis Numérico
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ecuaciones_no_lineales') }}">Ecuaciones No Lineales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('errores') }}">Cálculo de Errores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('series_taylor') }}">Series de Taylor</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('sistemas_ecuaciones') }}">Sistemas de Ecuaciones</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="text-center mb-4">
+                    <i class="fas fa-matrix fa-2x text-warning"></i>
+                    <br>Sistemas de Ecuaciones Lineales
+                </h1>
+                <p class="text-center lead">Resolución usando eliminación de Gauss con pivoteo</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-dark">
+                        <h5><i class="fas fa-cogs"></i> Método de Eliminación de Gauss</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Configuración del tamaño del sistema -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Tamaño del sistema (n x n):</label>
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-outline-primary dimension-btn" onclick="setDimension(2)">2x2</button>
+                                    <button type="button" class="btn btn-outline-primary dimension-btn" onclick="setDimension(3)">3x3</button>
+                                    <button type="button" class="btn btn-outline-primary dimension-btn" onclick="setDimension(4)">4x4</button>
+                                    <button type="button" class="btn btn-outline-primary dimension-btn" onclick="setDimension(5)">5x5</button>
+                                </div>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="dimension" min="2" max="10" value="3" onchange="updateMatrixSize()">
+                                    <button class="btn btn-primary" type="button" onclick="updateMatrixSize()">
+                                        <i class="fas fa-sync"></i> Actualizar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de pivoteo:</label>
+                                <select class="form-select" id="tipoPivoteo">
+                                    <option value="0">Sin pivoteo</option>
+                                    <option value="1" selected>Pivoteo parcial</option>
+                                    <option value="2">Pivoteo total</option>
+                                </select>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="mostrarProceso">
+                                    <label class="form-check-label" for="mostrarProceso">
+                                        Mostrar proceso paso a paso
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Matriz del sistema -->
+                        <div class="mb-4">
+                            <h6>Sistema de ecuaciones: Ax = b</h6>
+                            <div class="d-flex justify-content-center align-items-center flex-wrap" id="sistemaContainer">
+                                <!-- La matriz se generará dinámicamente aquí -->
+                            </div>
+                        </div>
+
+                        <!-- Botones de ejemplo -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <h6>Ejemplos predefinidos:</h6>
+                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="cargarEjemplo('ejemplo1')">
+                                    Ejemplo 1 (3x3)
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="cargarEjemplo('ejemplo2')">
+                                    Ejemplo 2 (3x3)
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="cargarEjemplo('problema')">
+                                    Sistema problemático
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="limpiarMatriz()">
+                                    <i class="fas fa-trash"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-info me-md-2" onclick="validarSistema()">
+                                <i class="fas fa-check-circle"></i> Validar Sistema
+                            </button>
+                            <button type="button" class="btn btn-warning" onclick="resolverSistema()" id="btnResolver">
+                                <i class="fas fa-play"></i> Resolver Sistema
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultados -->
+        <div class="row mt-4" id="resultadosContainer" style="display: none;">
+            <div class="col-md-12">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-chart-line"></i> Resultados</h5>
+                    </div>
+                    <div class="card-body" id="resultadosContent">
+                        <!-- Los resultados se mostrarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proceso paso a paso -->
+        <div class="row mt-4" id="procesoContainer" style="display: none;">
+            <div class="col-md-12">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-list-ol"></i> Proceso paso a paso</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="procesoContent" class="process-output">
+                            <!-- El proceso se mostrará aquí -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del método -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle"></i> Información del Método</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6><i class="fas fa-arrow-right"></i> Sin Pivoteo</h6>
+                                <p class="small">
+                                    Eliminación directa sin intercambio de filas. 
+                                    Puede fallar si hay pivotes cero o muy pequeños.
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6><i class="fas fa-arrows-alt-v"></i> Pivoteo Parcial</h6>
+                                <p class="small">
+                                    Busca el mayor elemento en la columna actual e intercambia filas. 
+                                    Mejora la estabilidad numérica.
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6><i class="fas fa-th"></i> Pivoteo Total</h6>
+                                <p class="small">
+                                    Busca el mayor elemento en toda la submatriz e intercambia filas y columnas. 
+                                    Máxima estabilidad numérica.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <strong>Nota:</strong> Ingrese números decimales usando punto (.) como separador. 
+                            El sistema debe ser cuadrado (mismo número de ecuaciones que incógnitas).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2024 Análisis Numérico - Sistemas de Ecuaciones Lineales</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/sistemas.js') }}"></script>
+</body>
+</html>
+

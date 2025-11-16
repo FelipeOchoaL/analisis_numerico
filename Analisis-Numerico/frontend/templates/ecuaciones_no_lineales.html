@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecuaciones No Lineales - Análisis Numérico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-calculator"></i> Análisis Numérico
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h1 class="text-center mb-5">
+            <i class="fas fa-square-root-alt"></i> Ecuaciones No Lineales
+        </h1>
+
+        <!-- Tabs para diferentes métodos -->
+        <ul class="nav nav-tabs" id="metodosTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="biseccion-tab" data-bs-toggle="tab" data-bs-target="#biseccion" type="button">
+                    <i class="fas fa-cut"></i> Bisección
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="punto-fijo-tab" data-bs-toggle="tab" data-bs-target="#punto-fijo" type="button">
+                    <i class="fas fa-crosshairs"></i> Punto Fijo
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="regla-falsa-tab" data-bs-toggle="tab" data-bs-target="#regla-falsa" type="button">
+                    <i class="fas fa-balance-scale"></i> Regla Falsa
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="busqueda-tab" data-bs-toggle="tab" data-bs-target="#busqueda" type="button">
+                    <i class="fas fa-search"></i> Búsqueda Incremental
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="newton-raphson-tab" data-bs-toggle="tab" data-bs-target="#newton-raphson" type="button">
+                    <i class="fas fa-chart-line"></i> Newton-Raphson
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="secante-tab" data-bs-toggle="tab" data-bs-target="#secante" type="button">
+                    <i class="fas fa-trending-up"></i> Secante
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="raices-multiples-tab" data-bs-toggle="tab" data-bs-target="#raices-multiples" type="button">
+                    <i class="fas fa-layer-group"></i> Raíces Múltiples
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="metodosTabContent">
+            <!-- Método de Bisección -->
+            <div class="tab-pane fade show active" id="biseccion" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-cut"></i> Método de Bisección</h5>
+                        <small class="text-muted">Encuentra raíces en un intervalo con cambio de signo</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="biseccionForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="biseccion_xi" class="form-label">Xi (extremo izquierdo):</label>
+                                        <input type="number" step="any" class="form-control" id="biseccion_xi" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="biseccion_xs" class="form-label">Xs (extremo derecho):</label>
+                                        <input type="number" step="any" class="form-control" id="biseccion_xs" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="biseccion_tol" class="form-label">Tolerancia:</label>
+                                        <input type="number" step="any" class="form-control" id="biseccion_tol" value="0.001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="biseccion_niter" class="form-label">Número de iteraciones:</label>
+                                        <input type="number" class="form-control" id="biseccion_niter" value="100" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="biseccion_tipo_error" class="form-label">Tipo de error para convergencia:</label>
+                                        <select class="form-select" id="biseccion_tipo_error">
+                                            <option value="absoluto" selected>Error Absoluto</option>
+                                            <option value="relativo">Error Relativo</option>
+                                        </select>
+                                        <div class="form-text">Ambos errores se mostrarán en la tabla</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="biseccion_funcion" class="form-label">Función f(x):</label>
+                                <input type="text" class="form-control" id="biseccion_funcion" placeholder="Ej: x**2 - 4" required>
+                                <div class="form-text">Use 'x' como variable. Funciones disponibles: sin, cos, tan, exp, log, sqrt</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Calcular
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Resultados -->
+                <div id="biseccionResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultados - Método de Bisección</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="biseccionOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Punto Fijo -->
+            <div class="tab-pane fade" id="punto-fijo" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-crosshairs"></i> Método de Punto Fijo</h5>
+                        <small class="text-muted">Encuentra puntos fijos de una función de iteración</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="puntoFijoForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="pf_x0" class="form-label">X0 (valor inicial):</label>
+                                        <input type="number" step="any" class="form-control" id="pf_x0" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="pf_tol" class="form-label">Tolerancia:</label>
+                                        <input type="number" step="any" class="form-control" id="pf_tol" value="0.001" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="pf_niter" class="form-label">Número de iteraciones:</label>
+                                        <input type="number" class="form-control" id="pf_niter" value="100" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="pf_tipo_error" class="form-label">Tipo de error para convergencia:</label>
+                                        <select class="form-select" id="pf_tipo_error">
+                                            <option value="absoluto" selected>Error Absoluto</option>
+                                            <option value="relativo">Error Relativo</option>
+                                        </select>
+                                        <div class="form-text">Ambos errores se mostrarán en la tabla</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="pf_funcion_f" class="form-label">Función f(x) original:</label>
+                                <input type="text" class="form-control" id="pf_funcion_f" placeholder="Ej: x**2 - 4" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="pf_funcion_g" class="form-label">Función de iteración g(x):</label>
+                                <input type="text" class="form-control" id="pf_funcion_g" placeholder="Ej: sqrt(4)" required>
+                                <div class="form-text">g(x) debe cumplir que la raíz de f(x) sea un punto fijo de g(x)</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Calcular
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="puntoFijoResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultados - Método de Punto Fijo</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="puntoFijoOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Regla Falsa -->
+            <div class="tab-pane fade" id="regla-falsa" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-balance-scale"></i> Método de Regla Falsa</h5>
+                        <small class="text-muted">Interpolación lineal para encontrar raíces</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="reglaFalsaForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="rf_x0" class="form-label">X0 (extremo izquierdo):</label>
+                                        <input type="number" step="any" class="form-control" id="rf_x0" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rf_x1" class="form-label">X1 (extremo derecho):</label>
+                                        <input type="number" step="any" class="form-control" id="rf_x1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="rf_tol" class="form-label">Tolerancia:</label>
+                                        <input type="number" step="any" class="form-control" id="rf_tol" value="0.001" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rf_niter" class="form-label">Número de iteraciones:</label>
+                                        <input type="number" class="form-control" id="rf_niter" value="100" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rf_tipo_error" class="form-label">Tipo de error para convergencia:</label>
+                                        <select class="form-select" id="rf_tipo_error">
+                                            <option value="absoluto" selected>Error Absoluto</option>
+                                            <option value="relativo">Error Relativo</option>
+                                        </select>
+                                        <div class="form-text">Ambos errores se mostrarán en la tabla</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="rf_funcion" class="form-label">Función f(x):</label>
+                                <input type="text" class="form-control" id="rf_funcion" placeholder="Ej: x**2 - 4" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Calcular
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="reglaFalsaResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultados - Método de Regla Falsa</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="reglaFalsaOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Búsqueda Incremental -->
+            <div class="tab-pane fade" id="busqueda" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-search"></i> Búsqueda Incremental</h5>
+                        <small class="text-muted">Encuentra intervalos con cambio de signo</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="busquedaForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="bi_x0" class="form-label">X0 (valor inicial):</label>
+                                        <input type="number" step="any" class="form-control" id="bi_x0" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="bi_delta" class="form-label">Delta (incremento):</label>
+                                        <input type="number" step="any" class="form-control" id="bi_delta" value="0.5" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="bi_niter" class="form-label">Número de iteraciones:</label>
+                                        <input type="number" class="form-control" id="bi_niter" value="100" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bi_funcion" class="form-label">Función f(x):</label>
+                                <input type="text" class="form-control" id="bi_funcion" placeholder="Ej: x**2 - 4" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Calcular
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="busquedaResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultados - Búsqueda Incremental</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="busquedaOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Newton-Raphson -->
+            <div class="tab-pane fade" id="newton-raphson" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Método de Newton-Raphson</h5>
+                        <small class="text-muted">Método iterativo que usa la derivada: x_{i+1} = x_i - f(x_i)/f'(x_i)</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="newtonRaphsonForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="nr_x0" class="form-label">X0 (valor inicial):</label>
+                                        <input type="number" step="any" class="form-control" id="nr_x0" required>
+                                        <div class="form-text">Valor inicial para comenzar las iteraciones</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nr_tol" class="form-label">Tolerancia:</label>
+                                        <input type="number" step="any" class="form-control" id="nr_tol" value="0.000001" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="nr_niter" class="form-label">Número de iteraciones:</label>
+                                        <input type="number" class="form-control" id="nr_niter" value="50" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Incluir error en tabla:</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="nr_incluir_error" checked>
+                                            <label class="form-check-label" for="nr_incluir_error">
+                                                Mostrar columna E (error relativo)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nr_tipo_error" class="form-label">Tipo de error para convergencia:</label>
+                                        <select class="form-select" id="nr_tipo_error">
+                                            <option value="absoluto" selected>Error Absoluto</option>
+                                            <option value="relativo">Error Relativo</option>
+                                        </select>
+                                        <div class="form-text">Ambos errores se mostrarán en la tabla</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nr_tipo_precision" class="form-label">Tipo de precisión:</label>
+                                        <select class="form-select" id="nr_tipo_precision">
+                                            <option value="decimales" selected>Decimales correctos</option>
+                                            <option value="significativas">Cifras significativas</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nr_precision" class="form-label">Precisión:</label>
+                                        <input type="number" class="form-control" id="nr_precision" value="6" min="1" max="15" required>
+                                        <div class="form-text">Número de decimales o cifras significativas</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nr_funcion_f" class="form-label">Función f(x):</label>
+                                <input type="text" class="form-control" id="nr_funcion_f" placeholder="Ej: x**3 - 2*x - 5" required>
+                                <div class="form-text">Use 'x' como variable. Funciones disponibles: sin, cos, tan, exp, log, sqrt</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nr_funcion_df" class="form-label">Derivada f'(x):</label>
+                                <input type="text" class="form-control" id="nr_funcion_df" placeholder="Ej: 3*x**2 - 2" required>
+                                <div class="form-text">Derivada de la función f(x)</div>
+                            </div>
+                            
+                            <div class="alert alert-info" role="alert">
+                                <h6><i class="fas fa-info-circle"></i> Procedimiento del Método:</h6>
+                                <ol class="mb-0">
+                                    <li><strong>PASO 0:</strong> Calcular f'(x)</li>
+                                    <li><strong>PASO 1:</strong> Evaluar f(xi) y f'(xi)</li>
+                                    <li><strong>PASO 2:</strong> Calcular la raíz aproximada xi+1 = xi - f(xi)/f'(xi)</li>
+                                    <li><strong>PASO 3:</strong> Calcular el error E = |xi+1 - xi| / |xi+1|</li>
+                                </ol>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Calcular
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="newtonRaphsonResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultados - Método de Newton-Raphson</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="newtonRaphsonOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de la Secante -->
+            <div class="tab-pane fade" id="secante" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-trending-up"></i> Método de la Secante</h5>
+                        <small class="text-muted">Método iterativo sin derivadas: x_{i+1} = x_i - f(x_i) * (x_i - x_{i-1}) / (f(x_i) - f(x_{i-1}))</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="secanteForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sec_x0" class="form-label">X0 (primer valor inicial):</label>
+                                        <input type="number" step="any" class="form-control" id="sec_x0" required>
+                                        <div class="form-text">Primer punto para iniciar las iteraciones</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sec_x1" class="form-label">X1 (segundo valor inicial):</label>
+                                        <input type="number" step="any" class="form-control" id="sec_x1" required>
+                                        <div class="form-text">Segundo punto para iniciar las iteraciones</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sec_tol" class="form-label">Tolerancia:</label>
+                                        <input type="number" step="any" class="form-control" id="sec_tol" value="0.000001" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sec_niter" class="form-label">Número de iteraciones:</label>
+                                        <input type="number" class="form-control" id="sec_niter" value="50" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Incluir error en tabla:</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sec_incluir_error" checked>
+                                            <label class="form-check-label" for="sec_incluir_error">
+                                                Mostrar columna E (error relativo)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sec_tipo_error" class="form-label">Tipo de error para convergencia:</label>
+                                        <select class="form-select" id="sec_tipo_error">
+                                            <option value="absoluto" selected>Error Absoluto</option>
+                                            <option value="relativo">Error Relativo</option>
+                                        </select>
+                                        <div class="form-text">Ambos errores se mostrarán en la tabla</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sec_tipo_precision" class="form-label">Tipo de precisión:</label>
+                                        <select class="form-select" id="sec_tipo_precision">
+                                            <option value="decimales" selected>Decimales correctos</option>
+                                            <option value="significativas">Cifras significativas</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sec_precision" class="form-label">Precisión:</label>
+                                        <input type="number" class="form-control" id="sec_precision" value="6" min="1" max="15" required>
+                                        <div class="form-text">Número de decimales o cifras significativas</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="sec_funcion" class="form-label">Función f(x):</label>
+                                <input type="text" class="form-control" id="sec_funcion" placeholder="Ej: x**3 - 2*x - 5" required>
+                                <div class="form-text">Use 'x' como variable. Funciones disponibles: sin, cos, tan, exp, log, sqrt</div>
+                            </div>
+                            
+                            <div class="alert alert-info" role="alert">
+                                <h6><i class="fas fa-info-circle"></i> Procedimiento del Método:</h6>
+                                <ol class="mb-0">
+                                    <li><strong>PASO 0:</strong> Establecer dos condiciones iniciales X0 y X1</li>
+                                    <li><strong>PASO 1:</strong> Evaluar f(x_{i-1}) y f(x_i)</li>
+                                    <li><strong>PASO 2:</strong> Calcular la raíz aproximada x_{i+1} = x_i - f(x_i) * (x_i - x_{i-1}) / (f(x_i) - f(x_{i-1}))</li>
+                                    <li><strong>PASO 3:</strong> Calcular el error E = |x_{i+1} - x_i| / |x_{i+1}|</li>
+                                </ol>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Calcular
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="secanteResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultados - Método de la Secante</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="secanteOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Raíces Múltiples -->
+            <div class="tab-pane fade" id="raices-multiples" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-layer-group"></i> Método de Raíces Múltiples</h5>
+                        <small>Encuentra raíces con multiplicidad mayor a 1 donde f(x), f'(x) y f''(x) se anulan</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning" role="alert">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Guía rápida para ingresar los datos:</h6>
+                            <ul class="mb-0">
+                                <li>Use la variable <code>x</code> y el operador <code>**</code> para potencias (ej. <code>x**3</code>)</li>
+                                <li>Las funciones comunes están disponibles como <code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code>, <code>exp(x)</code> o <code>log(x)</code></li>
+                                <li><strong>Revise que f'(x) y f''(x) correspondan a la función original</strong>; un error en las derivadas impide la convergencia</li>
+                                <li>Si su raíz es múltiple, verifique que f(x), f'(x) y f''(x) se anulen en el mismo punto</li>
+                            </ul>
+                        </div>
+
+                        <form id="raicesMultiplesForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="rm_x0" class="form-label">X₀ (Valor inicial):</label>
+                                        <input type="number" step="any" class="form-control" id="rm_x0" placeholder="1.5" required>
+                                        <div class="form-text">Ejemplo: 1.5</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rm_tolerancia" class="form-label">Tolerancia:</label>
+                                        <input type="number" step="any" class="form-control" id="rm_tolerancia" value="0.000001" required>
+                                        <div class="form-text">Ingrese una tolerancia positiva, por ejemplo 1e-6</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rm_niter" class="form-label">Número máximo de iteraciones:</label>
+                                        <input type="number" class="form-control" id="rm_niter" value="50" min="1" required>
+                                        <div class="form-text">Seleccione un número de iteraciones mayor o igual a 1</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rm_tipo_error" class="form-label">Tipo de error para convergencia:</label>
+                                        <select class="form-select" id="rm_tipo_error">
+                                            <option value="absoluto" selected>Error Absoluto</option>
+                                            <option value="relativo">Error Relativo</option>
+                                        </select>
+                                        <div class="form-text">Ambos errores se mostrarán en la tabla</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rm_modo" class="form-label">Modo de cálculo de error:</label>
+                                        <select class="form-select" id="rm_modo">
+                                            <option value="dc" selected>Decimales Correctos</option>
+                                            <option value="cs">Cifras Significativas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="rm_funcion_f" class="form-label">Función f(x):</label>
+                                        <input type="text" class="form-control" id="rm_funcion_f" placeholder="exp(-x) - x" required>
+                                        <div class="form-text">Use la variable x. Ejemplo: exp(-x) - x**2 + 3</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rm_funcion_df" class="form-label">Derivada f'(x):</label>
+                                        <input type="text" class="form-control" id="rm_funcion_df" placeholder="-exp(-x) - 1" required>
+                                        <div class="form-text">Puede escribir la derivada directamente. Ejemplo: -exp(-x) - 2*x</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rm_funcion_ddf" class="form-label">Segunda derivada f''(x):</label>
+                                        <input type="text" class="form-control" id="rm_funcion_ddf" placeholder="exp(-x)" required>
+                                        <div class="form-text">Ejemplo: exp(-x) - 2</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info" role="alert">
+                                <h6><i class="fas fa-info-circle"></i> Fórmula del Método:</h6>
+                                <p class="mb-0"><strong>x<sub>i+1</sub> = x<sub>i</sub> - [f(x<sub>i</sub>) × f'(x<sub>i</sub>)] / [f'(x<sub>i</sub>)<sup>2</sup> - f(x<sub>i</sub>) × f''(x<sub>i</sub>)]</strong></p>
+                            </div>
+
+                            <div class="mb-3">
+                                <a href="https://es.wikipedia.org/wiki/Reglas_de_derivación" class="btn btn-outline-success btn-sm me-2" target="_blank">
+                                    <i class="fas fa-book"></i> Reglas de derivación
+                                </a>
+                                <a href="https://www.calculadora-de-derivadas.com" class="btn btn-outline-success btn-sm me-2" target="_blank">
+                                    <i class="fas fa-calculator"></i> Calculadora de derivadas
+                                </a>
+                                <a href="https://www.symbolab.com/solver/step-by-step" class="btn btn-outline-success btn-sm" target="_blank">
+                                    <i class="fas fa-question-circle"></i> Ayuda paso a paso
+                                </a>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Calcular
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="raicesMultiplesResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="fas fa-check-circle"></i> Resultados - Método de Raíces Múltiples</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="raicesMultiplesOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/ecuaciones.js') }}"></script>
+</body>
+</html>

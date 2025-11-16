@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de Errores - Análisis Numérico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-calculator"></i> Análisis Numérico
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h1 class="text-center mb-5">
+            <i class="fas fa-percent"></i> Cálculo de Errores
+        </h1>
+
+        <!-- Tabs para diferentes tipos de errores -->
+        <ul class="nav nav-tabs" id="erroresTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="error-absoluto-tab" data-bs-toggle="tab" data-bs-target="#error-absoluto" type="button">
+                    <i class="fas fa-ruler"></i> Error Absoluto
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="error-relativo-tab" data-bs-toggle="tab" data-bs-target="#error-relativo" type="button">
+                    <i class="fas fa-percentage"></i> Error Relativo
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="propagacion-tab" data-bs-toggle="tab" data-bs-target="#propagacion" type="button">
+                    <i class="fas fa-share-alt"></i> Propagación de Errores
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="erroresTabContent">
+            <!-- Error Absoluto -->
+            <div class="tab-pane fade show active" id="error-absoluto" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-ruler"></i> Error Absoluto</h5>
+                        <small class="text-muted">E_abs = |x_exacto - x_aproximado|</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="errorAbsolutoForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="ea_aproximado" class="form-label">Valor Aproximado:</label>
+                                        <input type="number" step="any" class="form-control" id="ea_aproximado" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="ea_exacto" class="form-label">Valor Exacto:</label>
+                                        <input type="number" step="any" class="form-control" id="ea_exacto" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-calculator"></i> Calcular Error Absoluto
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="errorAbsolutoResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultado - Error Absoluto</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="errorAbsolutoOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Relativo -->
+            <div class="tab-pane fade" id="error-relativo" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-percentage"></i> Error Relativo</h5>
+                        <small class="text-muted">E_rel = |x_exacto - x_aproximado| / |x_exacto|</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="errorRelativoForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="er_aproximado" class="form-label">Valor Aproximado:</label>
+                                        <input type="number" step="any" class="form-control" id="er_aproximado" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="er_exacto" class="form-label">Valor Exacto:</label>
+                                        <input type="number" step="any" class="form-control" id="er_exacto" required>
+                                        <div class="form-text">No puede ser cero</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-calculator"></i> Calcular Error Relativo
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="errorRelativoResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultado - Error Relativo</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="errorRelativoOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Propagación de Errores -->
+            <div class="tab-pane fade" id="propagacion" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-share-alt"></i> Propagación de Errores</h5>
+                        <small class="text-muted">Cálculo de errores propagados en operaciones básicas</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="propagacionForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="pe_x" class="form-label">Valor X:</label>
+                                        <input type="number" step="any" class="form-control" id="pe_x" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="pe_ex" class="form-label">Error en X:</label>
+                                        <input type="number" step="any" class="form-control" id="pe_ex" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="pe_y" class="form-label">Valor Y:</label>
+                                        <input type="number" step="any" class="form-control" id="pe_y" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="pe_ey" class="form-label">Error en Y:</label>
+                                        <input type="number" step="any" class="form-control" id="pe_ey" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="pe_operacion" class="form-label">Operación:</label>
+                                <select class="form-select" id="pe_operacion" required>
+                                    <option value="">Seleccione una operación</option>
+                                    <option value="suma">Suma (X + Y)</option>
+                                    <option value="resta">Resta (X - Y)</option>
+                                    <option value="producto">Producto (X * Y)</option>
+                                    <option value="division">División (X / Y)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-calculator"></i> Calcular Propagación
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="propagacionResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultado - Propagación de Errores</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="propagacionOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle"></i> Fórmulas de Propagación de Errores</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Suma y Resta:</h6>
+                                <p><code>Error = √(ex² + ey²)</code></p>
+                                <h6>Producto y División:</h6>
+                                <p><code>Error relativo = √((ex/x)² + (ey/y)²)</code></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Casos especiales:</h6>
+                                <ul>
+                                    <li>Para división: Y ≠ 0</li>
+                                    <li>Para producto: X ≠ 0 y Y ≠ 0</li>
+                                    <li>Error absoluto = |Error relativo| × |Resultado|</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/errores.js') }}"></script>
+</body>
+</html>

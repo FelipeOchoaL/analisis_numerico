@@ -1,0 +1,150 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn {
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.table {
+    font-size: 0.9rem;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-top: none;
+    font-weight: 600;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.nav-tabs .nav-link {
+    border-radius: 8px 8px 0 0;
+    margin-right: 5px;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.spinner-border {
+    color: #007bff;
+}
+
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.form-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* Estilos para las tablas de resultados */
+.resultado-tabla {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.resultado-resumen {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.numero-destacado {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* Estilos específicos para cada módulo */
+.bg-primary { background-color: #007bff !important; }
+.bg-success { background-color: #28a745 !important; }
+.bg-info { background-color: #17a2b8 !important; }
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .table {
+        font-size: 0.8rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .nav-tabs .nav-link {
+        font-size: 0.9rem;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.resultado-aparicion {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Estilos para códigos y fórmulas */
+code {
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Estilos para alertas de error */
+.alert-danger {
+    border-left: 4px solid #dc3545;
+}
+
+.alert-success {
+    border-left: 4px solid #28a745;
+}
+
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.alert-info {
+    border-left: 4px solid #17a2b8;
+}

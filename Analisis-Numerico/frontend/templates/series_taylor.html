@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Series de Taylor - Análisis Numérico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-info">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-calculator"></i> Análisis Numérico
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h1 class="text-center mb-5">
+            <i class="fas fa-wave-square"></i> Series de Taylor
+        </h1>
+
+        <!-- Tabs para diferentes funciones -->
+        <ul class="nav nav-tabs" id="taylorTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="coseno-tab" data-bs-toggle="tab" data-bs-target="#coseno" type="button">
+                    <i class="fas fa-wave-square"></i> Coseno
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="seno-tab" data-bs-toggle="tab" data-bs-target="#seno" type="button">
+                    <i class="fas fa-wave-square"></i> Seno
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ejemplos-tab" data-bs-toggle="tab" data-bs-target="#ejemplos" type="button">
+                    <i class="fas fa-list"></i> Ángulos Comunes
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="taylorTabContent">
+            <!-- Serie de Taylor - Coseno -->
+            <div class="tab-pane fade show active" id="coseno" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-wave-square"></i> Serie de Taylor - Coseno</h5>
+                        <small class="text-muted">cos(θ) = Σ[k=0 to ∞] (-1)^k * θ^(2k) / (2k)!</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="cosenoForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="cos_theta" class="form-label">Theta (radianes):</label>
+                                        <input type="number" step="any" class="form-control" id="cos_theta" required>
+                                        <div class="form-text">Ingrese el ángulo en radianes (ej: π/2 ≈ 1.5708)</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="cos_tolerancia" class="form-label">Tolerancia:</label>
+                                        <input type="number" step="any" class="form-control" id="cos_tolerancia" value="0.00000001" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="cos_niter" class="form-label">Número máximo de términos:</label>
+                                        <input type="number" class="form-control" id="cos_niter" value="1000" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="cos_error_relativo">
+                                            <label class="form-check-label" for="cos_error_relativo">
+                                                Usar error relativo
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-play"></i> Calcular cos(θ)
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="cosenoResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultados - Serie de Taylor (Coseno)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="cosenoOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Serie de Taylor - Seno -->
+            <div class="tab-pane fade" id="seno" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-wave-square"></i> Serie de Taylor - Seno</h5>
+                        <small class="text-muted">sen(θ) = Σ[k=0 to ∞] (-1)^k * θ^(2k+1) / (2k+1)!</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="senoForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sen_theta" class="form-label">Theta (radianes):</label>
+                                        <input type="number" step="any" class="form-control" id="sen_theta" required>
+                                        <div class="form-text">Ingrese el ángulo en radianes</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sen_tolerancia" class="form-label">Tolerancia:</label>
+                                        <input type="number" step="any" class="form-control" id="sen_tolerancia" value="0.00000001" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sen_niter" class="form-label">Número máximo de términos:</label>
+                                        <input type="number" class="form-control" id="sen_niter" value="1000" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sen_error_relativo">
+                                            <label class="form-check-label" for="sen_error_relativo">
+                                                Usar error relativo
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-play"></i> Calcular sen(θ)
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="senoResultados" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Resultados - Serie de Taylor (Seno)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="senoOutput"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ángulos Comunes -->
+            <div class="tab-pane fade" id="ejemplos" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-list"></i> Ángulos Comunes</h5>
+                        <small class="text-muted">Referencia rápida para conversión grados-radianes</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Conversión Grados → Radianes</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Grados</th>
+                                                <th>Radianes</th>
+                                                <th>Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>0°</td>
+                                                <td>0</td>
+                                                <td><button class="btn btn-sm btn-outline-info" onclick="setAngle(0, 'cos')">Usar cos</button> <button class="btn btn-sm btn-outline-info" onclick="setAngle(0, 'sen')">Usar sen</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>30°</td>
+                                                <td>π/6 ≈ 0.5236</td>
+                                                <td><button class="btn btn-sm btn-outline-info" onclick="setAngle(0.5236, 'cos')">Usar cos</button> <button class="btn btn-sm btn-outline-info" onclick="setAngle(0.5236, 'sen')">Usar sen</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>45°</td>
+                                                <td>π/4 ≈ 0.7854</td>
+                                                <td><button class="btn btn-sm btn-outline-info" onclick="setAngle(0.7854, 'cos')">Usar cos</button> <button class="btn btn-sm btn-outline-info" onclick="setAngle(0.7854, 'sen')">Usar sen</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>60°</td>
+                                                <td>π/3 ≈ 1.0472</td>
+                                                <td><button class="btn btn-sm btn-outline-info" onclick="setAngle(1.0472, 'cos')">Usar cos</button> <button class="btn btn-sm btn-outline-info" onclick="setAngle(1.0472, 'sen')">Usar sen</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>90°</td>
+                                                <td>π/2 ≈ 1.5708</td>
+                                                <td><button class="btn btn-sm btn-outline-info" onclick="setAngle(1.5708, 'cos')">Usar cos</button> <button class="btn btn-sm btn-outline-info" onclick="setAngle(1.5708, 'sen')">Usar sen</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td>180°</td>
+                                                <td>π ≈ 3.1416</td>
+                                                <td><button class="btn btn-sm btn-outline-info" onclick="setAngle(3.1416, 'cos')">Usar cos</button> <button class="btn btn-sm btn-outline-info" onclick="setAngle(3.1416, 'sen')">Usar sen</button></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Valores Exactos</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Función</th>
+                                                <th>Valor Exacto</th>
+                                                <th>Decimal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>cos(0)</td><td>1</td><td>1.000000</td></tr>
+                                            <tr><td>cos(π/6)</td><td>√3/2</td><td>0.866025</td></tr>
+                                            <tr><td>cos(π/4)</td><td>√2/2</td><td>0.707107</td></tr>
+                                            <tr><td>cos(π/3)</td><td>1/2</td><td>0.500000</td></tr>
+                                            <tr><td>cos(π/2)</td><td>0</td><td>0.000000</td></tr>
+                                            <tr><td>sen(0)</td><td>0</td><td>0.000000</td></tr>
+                                            <tr><td>sen(π/6)</td><td>1/2</td><td>0.500000</td></tr>
+                                            <tr><td>sen(π/4)</td><td>√2/2</td><td>0.707107</td></tr>
+                                            <tr><td>sen(π/3)</td><td>√3/2</td><td>0.866025</td></tr>
+                                            <tr><td>sen(π/2)</td><td>1</td><td>1.000000</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/taylor.js') }}"></script>
+</body>
+</html>
