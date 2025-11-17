@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from models.schemas import VandermondeRequest, NewtonRequest, LagrangeRequest, InterpolacionResponse
+from models.schemas import VandermondeRequest, NewtonRequest, LagrangeRequest, SplineRequest, InterpolacionResponse, SplineResponse
 from services.interpolacion_service import InterpolacionService
 import time
 
@@ -284,4 +284,137 @@ async def obtener_ejemplos():
             "grado": 6
         }
     }
+
+@router.post("/spline-lineal", response_model=SplineResponse)
+async def interpolar_spline_lineal(request: SplineRequest):
+    """
+    Interpolación usando Spline Lineal.
+    
+    El método de Spline Lineal construye una función polinomial a trozos donde cada
+    segmento entre puntos consecutivos es una línea recta (polinomio de grado 1).
+    Garantiza continuidad C⁰ (continuidad de la función).
+    
+    **Parámetros:**
+    - **x**: Lista de valores x (hasta 8 puntos). Los valores deben ser únicos.
+    - **y**: Lista de valores y correspondientes (mismo tamaño que x).
+    
+    **Retorna:**
+    - Lista de polinomios por tramo
+    - Gráfico con los puntos y los splines
+    - Información de cada tramo (rango y coeficientes)
+    
+    **Características:**
+    - Cada tramo es una línea recta (y = m*x + b)
+    - Continuidad C⁰ (la función es continua)
+    - Simple y rápido de calcular
+    - No presenta oscilaciones
+    
+    **Notas:**
+    - Los valores de x deben ser distintos entre sí
+    - Se construyen (n-1) segmentos lineales para n puntos
+    - Cada segmento conecta dos puntos consecutivos
+    """
+    try:
+        # Validación básica
+        if len(request.x) > 8:
+            raise HTTPException(
+                status_code=400,
+                detail="Se permiten máximo 8 puntos para interpolación"
+            )
+        
+        if len(request.x) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="Se necesitan al menos 2 puntos para interpolación"
+            )
+        
+        # Ejecutar el método de Spline Lineal
+        start_time = time.time()
+        resultado = service.spline_lineal(
+            x=request.x,
+            y=request.y
+        )
+        end_time = time.time()
+        
+        # Agregar tiempo de ejecución al mensaje si fue exitoso
+        if resultado["exito"]:
+            tiempo = end_time - start_time
+            resultado["mensaje"] += f" (Tiempo de ejecución: {tiempo:.6f} segundos)"
+        
+        return resultado
+    
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
+@router.post("/spline-cubico", response_model=SplineResponse)
+async def interpolar_spline_cubico(request: SplineRequest):
+    """
+    Interpolación usando Spline Cúbico Natural.
+    
+    El método de Spline Cúbico construye una función polinomial a trozos donde cada
+    segmento entre puntos consecutivos es un polinomio de grado 3. Garantiza continuidad
+    C² (continuidad de la función, primera y segunda derivadas).
+    
+    **Parámetros:**
+    - **x**: Lista de valores x (hasta 8 puntos). Los valores deben ser únicos.
+    - **y**: Lista de valores y correspondientes (mismo tamaño que x).
+    
+    **Retorna:**
+    - Lista de polinomios por tramo
+    - Gráfico con los puntos y los splines
+    - Información de cada tramo (rango y coeficientes)
+    
+    **Características:**
+    - Cada tramo es un polinomio cúbico (y = a*x³ + b*x² + c*x + d)
+    - Continuidad C² (función, primera y segunda derivadas son continuas)
+    - Spline "natural": segunda derivada = 0 en los extremos
+    - Suave y sin oscilaciones bruscas
+    - Muy utilizado en gráficos por computadora y diseño
+    
+    **Ventajas:**
+    - Curvas muy suaves y naturales
+    - Buena estabilidad numérica
+    - No presenta el fenómeno de Runge
+    - Minimiza la curvatura total
+    
+    **Notas:**
+    - Los valores de x deben ser distintos entre sí
+    - Se construyen (n-1) segmentos cúbicos para n puntos
+    - Requiere resolver un sistema de ecuaciones más grande que el spline lineal
+    """
+    try:
+        # Validación básica
+        if len(request.x) > 8:
+            raise HTTPException(
+                status_code=400,
+                detail="Se permiten máximo 8 puntos para interpolación"
+            )
+        
+        if len(request.x) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="Se necesitan al menos 2 puntos para interpolación"
+            )
+        
+        # Ejecutar el método de Spline Cúbico
+        start_time = time.time()
+        resultado = service.spline_cubico(
+            x=request.x,
+            y=request.y
+        )
+        end_time = time.time()
+        
+        # Agregar tiempo de ejecución al mensaje si fue exitoso
+        if resultado["exito"]:
+            tiempo = end_time - start_time
+            resultado["mensaje"] += f" (Tiempo de ejecución: {tiempo:.6f} segundos)"
+        
+        return resultado
+    
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 

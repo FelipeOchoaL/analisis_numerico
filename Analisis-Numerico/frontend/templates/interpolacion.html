@@ -77,8 +77,13 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link disabled" id="spline-tab" type="button">
-                    <i class="fas fa-bezier-curve"></i> Splines (Próximamente)
+                <button class="nav-link" id="spline-lineal-tab" data-bs-toggle="tab" data-bs-target="#spline-lineal" type="button">
+                    <i class="fas fa-minus"></i> Spline Lineal
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="spline-cubico-tab" data-bs-toggle="tab" data-bs-target="#spline-cubico" type="button">
+                    <i class="fas fa-bezier-curve"></i> Spline Cúbico
                 </button>
             </li>
         </ul>
@@ -537,6 +542,261 @@
                                 <span class="visually-hidden">Calculando...</span>
                             </div>
                             <p class="mt-2">Calculando interpolación...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Spline Lineal -->
+            <div class="tab-pane fade" id="spline-lineal" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h5><i class="fas fa-minus"></i> Método de Spline Lineal</h5>
+                        <small>Interpolación por tramos lineales con continuidad C⁰</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Instrucciones:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Ingresa al menos 2 puntos (x, y) y máximo 8 puntos</li>
+                                <li>Los valores de x deben ser únicos (no repetidos)</li>
+                                <li>El spline lineal conecta los puntos con segmentos de línea recta</li>
+                                <li>Garantiza continuidad de la función (C⁰)</li>
+                            </ul>
+                        </div>
+
+                        <form id="formSplineLineal" onsubmit="event.preventDefault(); calcularSplineLineal();">
+                            <!-- Puntos de datos -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Puntos de Datos (x, y):</strong></label>
+                                <div id="puntosContainerSplineLineal">
+                                    <!-- Los puntos se agregarán dinámicamente con JavaScript -->
+                                </div>
+                                <small class="text-muted">
+                                    <span id="contadorPuntosSplineLineal">0</span> de 8 puntos
+                                </small>
+                            </div>
+
+                            <!-- Botones para agregar/eliminar puntos -->
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-success" id="btnAgregarPuntoSplineLineal">
+                                    <i class="fas fa-plus"></i> Agregar Punto
+                                </button>
+                            </div>
+
+                            <!-- Ejemplos rápidos -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Ejemplos Rápidos:</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploSplineLinealLineal()">
+                                            Lineal
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploSplineLinealCuadratico()">
+                                            Cuadrático
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploSplineLinealCubico()">
+                                            Cúbico
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-warning btn-lg text-dark">
+                                    <i class="fas fa-play"></i> Calcular Spline Lineal
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="limpiarFormularioSplineLineal()">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Resultados -->
+                        <div id="resultadoSplineLineal" class="mt-4" style="display: none;">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0"><i class="fas fa-check-circle"></i> Resultados</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Polinomios por tramo -->
+                                    <div class="mb-3">
+                                        <h6><i class="fas fa-function"></i> Polinomios por Tramo:</h6>
+                                        <div class="alert alert-light border">
+                                            <div id="polinomioResultadoSplineLineal" style="font-size: 0.95em;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Gráfico -->
+                                    <div class="mb-3">
+                                        <h6><i class="fas fa-chart-area"></i> Gráfico:</h6>
+                                        <div class="text-center">
+                                            <img id="graficoResultadoSplineLineal" class="img-fluid border rounded" alt="Gráfico de interpolación">
+                                        </div>
+                                    </div>
+
+                                    <!-- Información adicional -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Información</h6>
+                                                    <p class="mb-1"><strong>Número de tramos:</strong> <span id="numTramosSplineLineal"></span></p>
+                                                    <p class="mb-0"><strong>Mensaje:</strong> <span id="mensajeInfoSplineLineal"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Área de errores -->
+                        <div id="errorDivSplineLineal" class="mt-4" style="display: none;">
+                            <div class="alert alert-danger">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Error</h6>
+                                <p id="errorMensajeSplineLineal" class="mb-0"></p>
+                            </div>
+                            <div id="errorGraficoSplineLineal" class="text-center" style="display: none;">
+                                <img id="graficoErrorSplineLineal" class="img-fluid border rounded" alt="Gráfico de error">
+                            </div>
+                        </div>
+
+                        <!-- Loading -->
+                        <div id="loadingSplineLineal" class="text-center mt-4" style="display: none;">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Calculando...</span>
+                            </div>
+                            <p class="mt-2">Calculando spline lineal...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Spline Cúbico -->
+            <div class="tab-pane fade" id="spline-cubico" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header bg-dark text-white">
+                        <h5><i class="fas fa-bezier-curve"></i> Método de Spline Cúbico</h5>
+                        <small>Interpolación por tramos cúbicos con continuidad C²</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Instrucciones:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Ingresa al menos 2 puntos (x, y) y máximo 8 puntos</li>
+                                <li>Los valores de x deben ser únicos (no repetidos)</li>
+                                <li>El spline cúbico conecta los puntos con segmentos polinomiales de grado 3</li>
+                                <li>Garantiza continuidad C² (función, primera y segunda derivadas continuas)</li>
+                                <li>Se utiliza spline "natural" con segunda derivada = 0 en los extremos</li>
+                            </ul>
+                        </div>
+
+                        <form id="formSplineCubico" onsubmit="event.preventDefault(); calcularSplineCubico();">
+                            <!-- Puntos de datos -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Puntos de Datos (x, y):</strong></label>
+                                <div id="puntosContainerSplineCubico">
+                                    <!-- Los puntos se agregarán dinámicamente con JavaScript -->
+                                </div>
+                                <small class="text-muted">
+                                    <span id="contadorPuntosSplineCubico">0</span> de 8 puntos
+                                </small>
+                            </div>
+
+                            <!-- Botones para agregar/eliminar puntos -->
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-success" id="btnAgregarPuntoSplineCubico">
+                                    <i class="fas fa-plus"></i> Agregar Punto
+                                </button>
+                            </div>
+
+                            <!-- Ejemplos rápidos -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Ejemplos Rápidos:</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploSplineCubicoLineal()">
+                                            Lineal
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploSplineCubicoCuadratico()">
+                                            Cuadrático
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploSplineCubicoCubico()">
+                                            Cúbico
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-dark btn-lg">
+                                    <i class="fas fa-play"></i> Calcular Spline Cúbico
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="limpiarFormularioSplineCubico()">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Resultados -->
+                        <div id="resultadoSplineCubico" class="mt-4" style="display: none;">
+                            <div class="card border-dark">
+                                <div class="card-header bg-dark text-white">
+                                    <h5 class="mb-0"><i class="fas fa-check-circle"></i> Resultados</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Polinomios por tramo -->
+                                    <div class="mb-3">
+                                        <h6><i class="fas fa-function"></i> Polinomios por Tramo:</h6>
+                                        <div class="alert alert-light border">
+                                            <div id="polinomioResultadoSplineCubico" style="font-size: 0.95em;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Gráfico -->
+                                    <div class="mb-3">
+                                        <h6><i class="fas fa-chart-area"></i> Gráfico:</h6>
+                                        <div class="text-center">
+                                            <img id="graficoResultadoSplineCubico" class="img-fluid border rounded" alt="Gráfico de interpolación">
+                                        </div>
+                                    </div>
+
+                                    <!-- Información adicional -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Información</h6>
+                                                    <p class="mb-1"><strong>Número de tramos:</strong> <span id="numTramosSplineCubico"></span></p>
+                                                    <p class="mb-0"><strong>Mensaje:</strong> <span id="mensajeInfoSplineCubico"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Área de errores -->
+                        <div id="errorDivSplineCubico" class="mt-4" style="display: none;">
+                            <div class="alert alert-danger">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Error</h6>
+                                <p id="errorMensajeSplineCubico" class="mb-0"></p>
+                            </div>
+                            <div id="errorGraficoSplineCubico" class="text-center" style="display: none;">
+                                <img id="graficoErrorSplineCubico" class="img-fluid border rounded" alt="Gráfico de error">
+                            </div>
+                        </div>
+
+                        <!-- Loading -->
+                        <div id="loadingSplineCubico" class="text-center mt-4" style="display: none;">
+                            <div class="spinner-border text-dark" role="status">
+                                <span class="visually-hidden">Calculando...</span>
+                            </div>
+                            <p class="mt-2">Calculando spline cúbico...</p>
                         </div>
                     </div>
                 </div>

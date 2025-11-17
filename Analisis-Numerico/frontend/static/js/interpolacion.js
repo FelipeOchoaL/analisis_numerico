@@ -916,3 +916,461 @@ function cargarEjemploLagrangeCubico() {
     document.getElementById('y-lagrange-4').value = -3;
 }
 
+// ==================== SPLINE LINEAL ====================
+
+let puntosCountSplineLineal = 0;
+
+// Inicializar Spline Lineal cuando se active el tab
+document.getElementById('spline-lineal-tab').addEventListener('shown.bs.tab', function() {
+    if (puntosCountSplineLineal === 0) {
+        agregarPuntoSplineLineal();
+        agregarPuntoSplineLineal();
+    }
+});
+
+function agregarPuntoSplineLineal() {
+    if (puntosCountSplineLineal >= MAX_PUNTOS) {
+        alert(`Solo se permiten máximo ${MAX_PUNTOS} puntos`);
+        return;
+    }
+    
+    puntosCountSplineLineal++;
+    const container = document.getElementById('puntosContainerSplineLineal');
+    const puntoDiv = document.createElement('div');
+    puntoDiv.className = 'input-group mb-2';
+    puntoDiv.id = `punto-splinelin-${puntosCountSplineLineal}`;
+    
+    puntoDiv.innerHTML = `
+        <span class="input-group-text">#${puntosCountSplineLineal}</span>
+        <span class="input-group-text">x:</span>
+        <input type="number" step="any" class="form-control punto-input" 
+               id="x-splinelin-${puntosCountSplineLineal}" placeholder="x${puntosCountSplineLineal}" required>
+        <span class="input-group-text">y:</span>
+        <input type="number" step="any" class="form-control punto-input" 
+               id="y-splinelin-${puntosCountSplineLineal}" placeholder="y${puntosCountSplineLineal}" required>
+        <button type="button" class="btn btn-danger btn-sm" 
+                onclick="eliminarPuntoSplineLineal(${puntosCountSplineLineal})">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    container.appendChild(puntoDiv);
+    actualizarContadorSplineLineal();
+    actualizarBotonAgregarSplineLineal();
+}
+
+function eliminarPuntoSplineLineal(id) {
+    if (puntosCountSplineLineal <= 2) {
+        alert('Debe haber al menos 2 puntos');
+        return;
+    }
+    
+    const punto = document.getElementById(`punto-splinelin-${id}`);
+    if (punto) {
+        punto.remove();
+        puntosCountSplineLineal--;
+        renumerarPuntosSplineLineal();
+        actualizarContadorSplineLineal();
+        actualizarBotonAgregarSplineLineal();
+    }
+}
+
+function renumerarPuntosSplineLineal() {
+    const container = document.getElementById('puntosContainerSplineLineal');
+    const puntos = container.children;
+    puntosCountSplineLineal = 0;
+    
+    Array.from(puntos).forEach((punto, index) => {
+        puntosCountSplineLineal++;
+        const newId = puntosCountSplineLineal;
+        punto.id = `punto-splinelin-${newId}`;
+        
+        const number = punto.querySelector('.input-group-text');
+        number.textContent = `#${newId}`;
+        
+        const xInput = punto.querySelector('input[id^="x-splinelin-"]');
+        const yInput = punto.querySelector('input[id^="y-splinelin-"]');
+        const xValue = xInput.value;
+        const yValue = yInput.value;
+        
+        xInput.id = `x-splinelin-${newId}`;
+        yInput.id = `y-splinelin-${newId}`;
+        xInput.value = xValue;
+        yInput.value = yValue;
+        xInput.placeholder = `x${newId}`;
+        yInput.placeholder = `y${newId}`;
+        
+        const deleteBtn = punto.querySelector('button');
+        deleteBtn.setAttribute('onclick', `eliminarPuntoSplineLineal(${newId})`);
+    });
+}
+
+function actualizarContadorSplineLineal() {
+    document.getElementById('contadorPuntosSplineLineal').textContent = puntosCountSplineLineal;
+}
+
+function actualizarBotonAgregarSplineLineal() {
+    const btn = document.getElementById('btnAgregarPuntoSplineLineal');
+    btn.disabled = puntosCountSplineLineal >= MAX_PUNTOS;
+}
+
+// Event listener para el botón de agregar punto
+document.addEventListener('DOMContentLoaded', function() {
+    const btnAgregar = document.getElementById('btnAgregarPuntoSplineLineal');
+    if (btnAgregar) {
+        btnAgregar.addEventListener('click', agregarPuntoSplineLineal);
+    }
+});
+
+async function calcularSplineLineal() {
+    // Ocultar resultados y errores anteriores
+    document.getElementById('resultadoSplineLineal').style.display = 'none';
+    document.getElementById('errorDivSplineLineal').style.display = 'none';
+    document.getElementById('loadingSplineLineal').style.display = 'block';
+    
+    // Obtener valores
+    const x = [];
+    const y = [];
+    
+    for (let i = 1; i <= puntosCountSplineLineal; i++) {
+        const xVal = parseFloat(document.getElementById(`x-splinelin-${i}`).value);
+        const yVal = parseFloat(document.getElementById(`y-splinelin-${i}`).value);
+        x.push(xVal);
+        y.push(yVal);
+    }
+    
+    try {
+        const response = await fetch('/api/spline-lineal', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ x, y })
+        });
+        
+        const data = await response.json();
+        document.getElementById('loadingSplineLineal').style.display = 'none';
+        
+        if (data.exito) {
+            mostrarResultadoSplineLineal(data);
+        } else {
+            mostrarErrorSplineLineal(data.mensaje, data.grafico);
+        }
+    } catch (error) {
+        document.getElementById('loadingSplineLineal').style.display = 'none';
+        mostrarErrorSplineLineal('Error de conexión con el servidor: ' + error.message);
+    }
+}
+
+function mostrarResultadoSplineLineal(data) {
+    // Mostrar polinomios por tramo
+    const polinomiosDiv = document.getElementById('polinomioResultadoSplineLineal');
+    polinomiosDiv.innerHTML = data.polinomios.map(pol => `<div class="mb-1">${pol}</div>`).join('');
+    
+    // Mostrar gráfico
+    if (data.grafico) {
+        document.getElementById('graficoResultadoSplineLineal').src = data.grafico;
+    }
+    
+    // Mostrar información
+    document.getElementById('numTramosSplineLineal').textContent = data.tramos ? data.tramos.length : 'N/A';
+    document.getElementById('mensajeInfoSplineLineal').textContent = data.mensaje;
+    
+    // Mostrar resultados
+    document.getElementById('resultadoSplineLineal').style.display = 'block';
+}
+
+function mostrarErrorSplineLineal(mensaje, grafico = null) {
+    document.getElementById('errorMensajeSplineLineal').textContent = mensaje;
+    
+    if (grafico) {
+        document.getElementById('graficoErrorSplineLineal').src = grafico;
+        document.getElementById('errorGraficoSplineLineal').style.display = 'block';
+    } else {
+        document.getElementById('errorGraficoSplineLineal').style.display = 'none';
+    }
+    
+    document.getElementById('errorDivSplineLineal').style.display = 'block';
+}
+
+function limpiarFormularioSplineLineal() {
+    // Eliminar todos los puntos
+    const container = document.getElementById('puntosContainerSplineLineal');
+    container.innerHTML = '';
+    puntosCountSplineLineal = 0;
+    
+    // Agregar 2 puntos por defecto
+    agregarPuntoSplineLineal();
+    agregarPuntoSplineLineal();
+    
+    // Ocultar resultados y errores
+    document.getElementById('resultadoSplineLineal').style.display = 'none';
+    document.getElementById('errorDivSplineLineal').style.display = 'none';
+}
+
+// Funciones para cargar ejemplos de Spline Lineal
+function cargarEjemploSplineLinealLineal() {
+    limpiarFormularioSplineLineal();
+    
+    document.getElementById('x-splinelin-1').value = 0;
+    document.getElementById('y-splinelin-1').value = 2;
+    document.getElementById('x-splinelin-2').value = 5;
+    document.getElementById('y-splinelin-2').value = 12;
+}
+
+function cargarEjemploSplineLinealCuadratico() {
+    limpiarFormularioSplineLineal();
+    agregarPuntoSplineLineal();
+    
+    document.getElementById('x-splinelin-1').value = 0;
+    document.getElementById('y-splinelin-1').value = 0;
+    document.getElementById('x-splinelin-2').value = 1;
+    document.getElementById('y-splinelin-2').value = 1;
+    document.getElementById('x-splinelin-3').value = 2;
+    document.getElementById('y-splinelin-3').value = 4;
+}
+
+function cargarEjemploSplineLinealCubico() {
+    limpiarFormularioSplineLineal();
+    agregarPuntoSplineLineal();
+    agregarPuntoSplineLineal();
+    
+    document.getElementById('x-splinelin-1').value = -1;
+    document.getElementById('y-splinelin-1').value = 0;
+    document.getElementById('x-splinelin-2').value = 0;
+    document.getElementById('y-splinelin-2').value = 1;
+    document.getElementById('x-splinelin-3').value = 1;
+    document.getElementById('y-splinelin-3').value = 0;
+    document.getElementById('x-splinelin-4').value = 2;
+    document.getElementById('y-splinelin-4').value = -3;
+}
+
+// ==================== SPLINE CÚBICO ====================
+
+let puntosCountSplineCubico = 0;
+
+// Inicializar Spline Cúbico cuando se active el tab
+document.getElementById('spline-cubico-tab').addEventListener('shown.bs.tab', function() {
+    if (puntosCountSplineCubico === 0) {
+        agregarPuntoSplineCubico();
+        agregarPuntoSplineCubico();
+    }
+});
+
+function agregarPuntoSplineCubico() {
+    if (puntosCountSplineCubico >= MAX_PUNTOS) {
+        alert(`Solo se permiten máximo ${MAX_PUNTOS} puntos`);
+        return;
+    }
+    
+    puntosCountSplineCubico++;
+    const container = document.getElementById('puntosContainerSplineCubico');
+    const puntoDiv = document.createElement('div');
+    puntoDiv.className = 'input-group mb-2';
+    puntoDiv.id = `punto-splinecub-${puntosCountSplineCubico}`;
+    
+    puntoDiv.innerHTML = `
+        <span class="input-group-text">#${puntosCountSplineCubico}</span>
+        <span class="input-group-text">x:</span>
+        <input type="number" step="any" class="form-control punto-input" 
+               id="x-splinecub-${puntosCountSplineCubico}" placeholder="x${puntosCountSplineCubico}" required>
+        <span class="input-group-text">y:</span>
+        <input type="number" step="any" class="form-control punto-input" 
+               id="y-splinecub-${puntosCountSplineCubico}" placeholder="y${puntosCountSplineCubico}" required>
+        <button type="button" class="btn btn-danger btn-sm" 
+                onclick="eliminarPuntoSplineCubico(${puntosCountSplineCubico})">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    container.appendChild(puntoDiv);
+    actualizarContadorSplineCubico();
+    actualizarBotonAgregarSplineCubico();
+}
+
+function eliminarPuntoSplineCubico(id) {
+    if (puntosCountSplineCubico <= 2) {
+        alert('Debe haber al menos 2 puntos');
+        return;
+    }
+    
+    const punto = document.getElementById(`punto-splinecub-${id}`);
+    if (punto) {
+        punto.remove();
+        puntosCountSplineCubico--;
+        renumerarPuntosSplineCubico();
+        actualizarContadorSplineCubico();
+        actualizarBotonAgregarSplineCubico();
+    }
+}
+
+function renumerarPuntosSplineCubico() {
+    const container = document.getElementById('puntosContainerSplineCubico');
+    const puntos = container.children;
+    puntosCountSplineCubico = 0;
+    
+    Array.from(puntos).forEach((punto, index) => {
+        puntosCountSplineCubico++;
+        const newId = puntosCountSplineCubico;
+        punto.id = `punto-splinecub-${newId}`;
+        
+        const number = punto.querySelector('.input-group-text');
+        number.textContent = `#${newId}`;
+        
+        const xInput = punto.querySelector('input[id^="x-splinecub-"]');
+        const yInput = punto.querySelector('input[id^="y-splinecub-"]');
+        const xValue = xInput.value;
+        const yValue = yInput.value;
+        
+        xInput.id = `x-splinecub-${newId}`;
+        yInput.id = `y-splinecub-${newId}`;
+        xInput.value = xValue;
+        yInput.value = yValue;
+        xInput.placeholder = `x${newId}`;
+        yInput.placeholder = `y${newId}`;
+        
+        const deleteBtn = punto.querySelector('button');
+        deleteBtn.setAttribute('onclick', `eliminarPuntoSplineCubico(${newId})`);
+    });
+}
+
+function actualizarContadorSplineCubico() {
+    document.getElementById('contadorPuntosSplineCubico').textContent = puntosCountSplineCubico;
+}
+
+function actualizarBotonAgregarSplineCubico() {
+    const btn = document.getElementById('btnAgregarPuntoSplineCubico');
+    btn.disabled = puntosCountSplineCubico >= MAX_PUNTOS;
+}
+
+// Event listener para el botón de agregar punto
+document.addEventListener('DOMContentLoaded', function() {
+    const btnAgregar = document.getElementById('btnAgregarPuntoSplineCubico');
+    if (btnAgregar) {
+        btnAgregar.addEventListener('click', agregarPuntoSplineCubico);
+    }
+});
+
+async function calcularSplineCubico() {
+    // Ocultar resultados y errores anteriores
+    document.getElementById('resultadoSplineCubico').style.display = 'none';
+    document.getElementById('errorDivSplineCubico').style.display = 'none';
+    document.getElementById('loadingSplineCubico').style.display = 'block';
+    
+    // Obtener valores
+    const x = [];
+    const y = [];
+    
+    for (let i = 1; i <= puntosCountSplineCubico; i++) {
+        const xVal = parseFloat(document.getElementById(`x-splinecub-${i}`).value);
+        const yVal = parseFloat(document.getElementById(`y-splinecub-${i}`).value);
+        x.push(xVal);
+        y.push(yVal);
+    }
+    
+    try {
+        const response = await fetch('/api/spline-cubico', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ x, y })
+        });
+        
+        const data = await response.json();
+        document.getElementById('loadingSplineCubico').style.display = 'none';
+        
+        if (data.exito) {
+            mostrarResultadoSplineCubico(data);
+        } else {
+            mostrarErrorSplineCubico(data.mensaje, data.grafico);
+        }
+    } catch (error) {
+        document.getElementById('loadingSplineCubico').style.display = 'none';
+        mostrarErrorSplineCubico('Error de conexión con el servidor: ' + error.message);
+    }
+}
+
+function mostrarResultadoSplineCubico(data) {
+    // Mostrar polinomios por tramo
+    const polinomiosDiv = document.getElementById('polinomioResultadoSplineCubico');
+    polinomiosDiv.innerHTML = data.polinomios.map(pol => `<div class="mb-1">${pol}</div>`).join('');
+    
+    // Mostrar gráfico
+    if (data.grafico) {
+        document.getElementById('graficoResultadoSplineCubico').src = data.grafico;
+    }
+    
+    // Mostrar información
+    document.getElementById('numTramosSplineCubico').textContent = data.tramos ? data.tramos.length : 'N/A';
+    document.getElementById('mensajeInfoSplineCubico').textContent = data.mensaje;
+    
+    // Mostrar resultados
+    document.getElementById('resultadoSplineCubico').style.display = 'block';
+}
+
+function mostrarErrorSplineCubico(mensaje, grafico = null) {
+    document.getElementById('errorMensajeSplineCubico').textContent = mensaje;
+    
+    if (grafico) {
+        document.getElementById('graficoErrorSplineCubico').src = grafico;
+        document.getElementById('errorGraficoSplineCubico').style.display = 'block';
+    } else {
+        document.getElementById('errorGraficoSplineCubico').style.display = 'none';
+    }
+    
+    document.getElementById('errorDivSplineCubico').style.display = 'block';
+}
+
+function limpiarFormularioSplineCubico() {
+    // Eliminar todos los puntos
+    const container = document.getElementById('puntosContainerSplineCubico');
+    container.innerHTML = '';
+    puntosCountSplineCubico = 0;
+    
+    // Agregar 2 puntos por defecto
+    agregarPuntoSplineCubico();
+    agregarPuntoSplineCubico();
+    
+    // Ocultar resultados y errores
+    document.getElementById('resultadoSplineCubico').style.display = 'none';
+    document.getElementById('errorDivSplineCubico').style.display = 'none';
+}
+
+// Funciones para cargar ejemplos de Spline Cúbico
+function cargarEjemploSplineCubicoLineal() {
+    limpiarFormularioSplineCubico();
+    
+    document.getElementById('x-splinecub-1').value = 0;
+    document.getElementById('y-splinecub-1').value = 2;
+    document.getElementById('x-splinecub-2').value = 5;
+    document.getElementById('y-splinecub-2').value = 12;
+}
+
+function cargarEjemploSplineCubicoCuadratico() {
+    limpiarFormularioSplineCubico();
+    agregarPuntoSplineCubico();
+    
+    document.getElementById('x-splinecub-1').value = 0;
+    document.getElementById('y-splinecub-1').value = 0;
+    document.getElementById('x-splinecub-2').value = 1;
+    document.getElementById('y-splinecub-2').value = 1;
+    document.getElementById('x-splinecub-3').value = 2;
+    document.getElementById('y-splinecub-3').value = 4;
+}
+
+function cargarEjemploSplineCubicoCubico() {
+    limpiarFormularioSplineCubico();
+    agregarPuntoSplineCubico();
+    agregarPuntoSplineCubico();
+    
+    document.getElementById('x-splinecub-1').value = -1;
+    document.getElementById('y-splinecub-1').value = 0;
+    document.getElementById('x-splinecub-2').value = 0;
+    document.getElementById('y-splinecub-2').value = 1;
+    document.getElementById('x-splinecub-3').value = 1;
+    document.getElementById('y-splinecub-3').value = 0;
+    document.getElementById('x-splinecub-4').value = 2;
+    document.getElementById('y-splinecub-4').value = -3;
+}
+

@@ -236,5 +236,29 @@ def proxy_lagrange():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/spline-lineal', methods=['POST'])
+def proxy_spline_lineal():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/interpolacion/spline-lineal",
+            json=request.json,
+            timeout=30
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/spline-cubico', methods=['POST'])
+def proxy_spline_cubico():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/interpolacion/spline-cubico",
+            json=request.json,
+            timeout=30
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=3000)

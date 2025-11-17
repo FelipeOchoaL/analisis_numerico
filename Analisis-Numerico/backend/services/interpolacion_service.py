@@ -593,4 +593,389 @@ class InterpolacionService:
         plt.close()
         
         return img_uri
+    
+    def spline_lineal(self, x: List[float], y: List[float]) -> Dict:
+        """
+        Implementa interpolación por Spline Lineal.
+        
+        Args:
+            x: Lista de valores x (coordenadas)
+            y: Lista de valores y (coordenadas)
+            
+        Returns:
+            Diccionario con los polinomios por tramos, gráfico y metadatos
+        """
+        # Validación: verificar que no hay valores x repetidos
+        if len(set(x)) != len(x):
+            img_uri = self._crear_grafico_error(x, y, 'Spline Lineal')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": "Error: Los valores de x deben ser únicos. Se encontraron valores repetidos.",
+                "tramos": None
+            }
+        
+        # Validación: verificar que x e y tienen el mismo tamaño
+        if len(x) != len(y):
+            img_uri = self._crear_grafico_error(x, y, 'Spline Lineal')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": f"Error: Las listas x e y deben tener el mismo tamaño. x tiene {len(x)} elementos y y tiene {len(y)} elementos.",
+                "tramos": None
+            }
+        
+        # Validación: verificar que hay al menos 2 puntos
+        if len(x) < 2:
+            img_uri = self._crear_grafico_error(x, y, 'Spline Lineal')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": "Error: Se necesitan al menos 2 puntos para interpolación.",
+                "tramos": None
+            }
+        
+        try:
+            n = len(x)
+            x_arr = np.array(x, dtype=float)
+            y_arr = np.array(y, dtype=float)
+            
+            # Construir el sistema de ecuaciones para spline lineal
+            # Cada tramo tiene 2 coeficientes (m, b) en y = m*x + b
+            A = np.zeros((2*(n-1), 2*(n-1)))
+            b_vec = np.zeros(2*(n-1))
+            
+            # Primera condición: cada spline pasa por el punto inicial del tramo
+            c = 0
+            h = 0
+            for i in range(n - 1):
+                A[h, c] = x_arr[i]
+                A[h, c+1] = 1
+                b_vec[h] = y_arr[i]
+                c += 2
+                h += 1
+            
+            # Segunda condición: cada spline pasa por el punto final del tramo
+            c = 0
+            for i in range(1, n):
+                A[h, c] = x_arr[i]
+                A[h, c+1] = 1
+                b_vec[h] = y_arr[i]
+                c += 2
+                h += 1
+            
+            # Resolver el sistema
+            coef = np.linalg.solve(A, b_vec)
+            tabla = coef.reshape((n-1, 2))
+            
+            # Construir strings de polinomios por tramo
+            polinomios_str = []
+            tramos_info = []
+            
+            for i in range(n-1):
+                m, b = tabla[i]
+                tramo = f"{x_arr[i]:.4f} ≤ x ≤ {x_arr[i+1]:.4f}"
+                pol = f"{m:.4f}*x + {b:.4f}"
+                polinomios_str.append(f"Tramo {i+1} ({tramo}): y = {pol}")
+                tramos_info.append({
+                    "tramo": i+1,
+                    "rango": tramo,
+                    "polinomio": pol,
+                    "coeficientes": [m, b]
+                })
+            
+        except np.linalg.LinAlgError as e:
+            img_uri = self._crear_grafico_error(x, y, 'Spline Lineal')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": f"Error al resolver el sistema de ecuaciones: {str(e)}",
+                "tramos": None
+            }
+        except Exception as e:
+            img_uri = self._crear_grafico_error(x, y, 'Spline Lineal')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": f"Error en el cálculo: {str(e)}",
+                "tramos": None
+            }
+        
+        # Crear el gráfico
+        try:
+            img_uri = self._crear_grafico_spline_lineal(x_arr, y_arr, tabla)
+        except Exception as e:
+            return {
+                "exito": False,
+                "polinomios": polinomios_str,
+                "grafico": None,
+                "mensaje": f"Polinomios calculados correctamente, pero error al crear el gráfico: {str(e)}",
+                "tramos": tramos_info
+            }
+        
+        return {
+            "exito": True,
+            "polinomios": polinomios_str,
+            "grafico": img_uri,
+            "mensaje": "Interpolación exitosa usando Spline Lineal",
+            "tramos": tramos_info
+        }
+    
+    def spline_cubico(self, x: List[float], y: List[float]) -> Dict:
+        """
+        Implementa interpolación por Spline Cúbico.
+        
+        Args:
+            x: Lista de valores x (coordenadas)
+            y: Lista de valores y (coordenadas)
+            
+        Returns:
+            Diccionario con los polinomios por tramos, gráfico y metadatos
+        """
+        # Validación: verificar que no hay valores x repetidos
+        if len(set(x)) != len(x):
+            img_uri = self._crear_grafico_error(x, y, 'Spline Cúbico')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": "Error: Los valores de x deben ser únicos. Se encontraron valores repetidos.",
+                "tramos": None
+            }
+        
+        # Validación: verificar que x e y tienen el mismo tamaño
+        if len(x) != len(y):
+            img_uri = self._crear_grafico_error(x, y, 'Spline Cúbico')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": f"Error: Las listas x e y deben tener el mismo tamaño. x tiene {len(x)} elementos y y tiene {len(y)} elementos.",
+                "tramos": None
+            }
+        
+        # Validación: verificar que hay al menos 2 puntos
+        if len(x) < 2:
+            img_uri = self._crear_grafico_error(x, y, 'Spline Cúbico')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": "Error: Se necesitan al menos 2 puntos para interpolación.",
+                "tramos": None
+            }
+        
+        try:
+            n = len(x)
+            x_arr = np.array(x, dtype=float)
+            y_arr = np.array(y, dtype=float)
+            
+            # Construir el sistema de ecuaciones para spline cúbico
+            # Cada tramo tiene 4 coeficientes (a, b, c, d) en y = a*x³ + b*x² + c*x + d
+            A = np.zeros((4*(n-1), 4*(n-1)))
+            b_vec = np.zeros(4*(n-1))
+            
+            # Primera condición: cada spline pasa por el punto inicial del tramo
+            c = 0
+            h = 0
+            for i in range(n - 1):
+                A[h, c] = x_arr[i]**3
+                A[h, c+1] = x_arr[i]**2
+                A[h, c+2] = x_arr[i]
+                A[h, c+3] = 1
+                b_vec[h] = y_arr[i]
+                c += 4
+                h += 1
+            
+            # Segunda condición: cada spline pasa por el punto final del tramo
+            c = 0
+            for i in range(1, n):
+                A[h, c] = x_arr[i]**3
+                A[h, c+1] = x_arr[i]**2
+                A[h, c+2] = x_arr[i]
+                A[h, c+3] = 1
+                b_vec[h] = y_arr[i]
+                c += 4
+                h += 1
+            
+            # Tercera condición: continuidad de la primera derivada
+            c = 0
+            for i in range(1, n - 1):
+                A[h, c] = 3*x_arr[i]**2
+                A[h, c+1] = 2*x_arr[i]
+                A[h, c+2] = 1
+                A[h, c+4] = -3*x_arr[i]**2
+                A[h, c+5] = -2*x_arr[i]
+                A[h, c+6] = -1
+                b_vec[h] = 0
+                c += 4
+                h += 1
+            
+            # Cuarta condición: continuidad de la segunda derivada
+            c = 0
+            for i in range(1, n - 1):
+                A[h, c] = 6*x_arr[i]
+                A[h, c+1] = 2
+                A[h, c+4] = -6*x_arr[i]
+                A[h, c+5] = -2
+                b_vec[h] = 0
+                c += 4
+                h += 1
+            
+            # Condiciones de frontera: segunda derivada = 0 en los extremos (spline natural)
+            A[h, 0] = 6 * x_arr[0]
+            A[h, 1] = 2
+            b_vec[h] = 0
+            h += 1
+            
+            A[h, -4] = 6 * x_arr[-1]
+            A[h, -3] = 2
+            b_vec[h] = 0
+            
+            # Resolver el sistema
+            coef = np.linalg.solve(A, b_vec)
+            tabla = coef.reshape((n-1, 4))
+            
+            # Construir strings de polinomios por tramo
+            polinomios_str = []
+            tramos_info = []
+            
+            for i in range(n-1):
+                a, b, c, d = tabla[i]
+                tramo = f"{x_arr[i]:.4f} ≤ x ≤ {x_arr[i+1]:.4f}"
+                pol = f"{a:.4f}*x**3 + {b:.4f}*x**2 + {c:.4f}*x + {d:.4f}"
+                polinomios_str.append(f"Tramo {i+1} ({tramo}): y = {pol}")
+                tramos_info.append({
+                    "tramo": i+1,
+                    "rango": tramo,
+                    "polinomio": pol,
+                    "coeficientes": [a, b, c, d]
+                })
+            
+        except np.linalg.LinAlgError as e:
+            img_uri = self._crear_grafico_error(x, y, 'Spline Cúbico')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": f"Error al resolver el sistema de ecuaciones: {str(e)}",
+                "tramos": None
+            }
+        except Exception as e:
+            img_uri = self._crear_grafico_error(x, y, 'Spline Cúbico')
+            return {
+                "exito": False,
+                "polinomios": None,
+                "grafico": img_uri,
+                "mensaje": f"Error en el cálculo: {str(e)}",
+                "tramos": None
+            }
+        
+        # Crear el gráfico
+        try:
+            img_uri = self._crear_grafico_spline_cubico(x_arr, y_arr, tabla)
+        except Exception as e:
+            return {
+                "exito": False,
+                "polinomios": polinomios_str,
+                "grafico": None,
+                "mensaje": f"Polinomios calculados correctamente, pero error al crear el gráfico: {str(e)}",
+                "tramos": tramos_info
+            }
+        
+        return {
+            "exito": True,
+            "polinomios": polinomios_str,
+            "grafico": img_uri,
+            "mensaje": "Interpolación exitosa usando Spline Cúbico (Natural)",
+            "tramos": tramos_info
+        }
+    
+    def _crear_grafico_spline_lineal(self, x: np.ndarray, y: np.ndarray, tabla: np.ndarray) -> str:
+        """
+        Crea el gráfico del spline lineal.
+        
+        Args:
+            x: Array de valores x
+            y: Array de valores y
+            tabla: Tabla con coeficientes (m, b) para cada tramo
+            
+        Returns:
+            String con la imagen en formato base64
+        """
+        plt.figure(figsize=(10, 6))
+        
+        # Graficar puntos
+        plt.plot(x, y, 'r*', markersize=15, label='Puntos dados', zorder=5)
+        
+        # Graficar cada tramo lineal
+        for i in range(len(tabla)):
+            x_vals = np.linspace(x[i], x[i+1], 200)
+            y_vals = tabla[i, 0] * x_vals + tabla[i, 1]
+            plt.plot(x_vals, y_vals, linewidth=2, label=f'Tramo {i+1}')
+        
+        plt.title('Spline Lineal', fontsize=14, fontweight='bold')
+        plt.xlabel('x', fontsize=12)
+        plt.ylabel('y', fontsize=12)
+        plt.legend(fontsize=10)
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir a base64
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        string = base64.b64encode(buf.read()).decode()
+        img_uri = f"data:image/png;base64,{string}"
+        
+        plt.close()
+        
+        return img_uri
+    
+    def _crear_grafico_spline_cubico(self, x: np.ndarray, y: np.ndarray, tabla: np.ndarray) -> str:
+        """
+        Crea el gráfico del spline cúbico.
+        
+        Args:
+            x: Array de valores x
+            y: Array de valores y
+            tabla: Tabla con coeficientes (a, b, c, d) para cada tramo
+            
+        Returns:
+            String con la imagen en formato base64
+        """
+        plt.figure(figsize=(10, 6))
+        
+        # Graficar puntos
+        plt.plot(x, y, 'r*', markersize=15, label='Puntos dados', zorder=5)
+        
+        # Graficar cada tramo cúbico
+        for i in range(len(tabla)):
+            x_vals = np.linspace(x[i], x[i+1], 200)
+            y_vals = (tabla[i, 0]*x_vals**3 + tabla[i, 1]*x_vals**2 +
+                      tabla[i, 2]*x_vals + tabla[i, 3])
+            plt.plot(x_vals, y_vals, linewidth=2, label=f'Tramo {i+1}')
+        
+        plt.title('Spline Cúbico', fontsize=14, fontweight='bold')
+        plt.xlabel('x', fontsize=12)
+        plt.ylabel('y', fontsize=12)
+        plt.legend(fontsize=10)
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir a base64
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        string = base64.b64encode(buf.read()).decode()
+        img_uri = f"data:image/png;base64,{string}"
+        
+        plt.close()
+        
+        return img_uri
 

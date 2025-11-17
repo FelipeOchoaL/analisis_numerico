@@ -138,6 +138,10 @@ class LagrangeRequest(BaseModel):
     x: List[float] = Field(..., description="Lista de valores x (hasta 8 puntos)")
     y: List[float] = Field(..., description="Lista de valores y (hasta 8 puntos)")
 
+class SplineRequest(BaseModel):
+    x: List[float] = Field(..., description="Lista de valores x (hasta 8 puntos)")
+    y: List[float] = Field(..., description="Lista de valores y (hasta 8 puntos)")
+
 class InterpolacionResponse(BaseModel):
     exito: bool
     polinomio: Optional[str] = None
@@ -145,3 +149,10 @@ class InterpolacionResponse(BaseModel):
     mensaje: str
     coeficientes: Optional[List[float]] = None
     grado: Optional[int] = None
+
+class SplineResponse(BaseModel):
+    exito: bool
+    polinomios: Optional[List[str]] = None
+    grafico: Optional[str] = None
+    mensaje: str
+    tramos: Optional[List[dict]] = None
