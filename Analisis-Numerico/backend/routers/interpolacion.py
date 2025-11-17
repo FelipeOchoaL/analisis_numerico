@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from models.schemas import VandermondeRequest, NewtonRequest, LagrangeRequest, SplineRequest, InterpolacionResponse, SplineResponse
+from models.schemas import VandermondeRequest, NewtonRequest, LagrangeRequest, SplineRequest, ComparacionRequest, InterpolacionResponse, SplineResponse, ComparacionResponse
 from services.interpolacion_service import InterpolacionService
 import time
 
@@ -410,6 +410,76 @@ async def interpolar_spline_cubico(request: SplineRequest):
         if resultado["exito"]:
             tiempo = end_time - start_time
             resultado["mensaje"] += f" (Tiempo de ejecución: {tiempo:.6f} segundos)"
+        
+        return resultado
+    
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
+@router.post("/comparar", response_model=ComparacionResponse)
+async def comparar_metodos(request: ComparacionRequest):
+    """
+    Ejecuta todos los métodos de interpolación y genera un informe comparativo.
+    
+    Este endpoint ejecuta simultáneamente los 5 métodos de interpolación disponibles
+    (Vandermonde, Newton, Lagrange, Spline Lineal, Spline Cúbico) con los mismos datos
+    y genera un análisis comparativo detallado.
+    
+    **Parámetros:**
+    - **x**: Lista de valores x (hasta 8 puntos). Los valores deben ser únicos.
+    - **y**: Lista de valores y correspondientes (mismo tamaño que x).
+    - **grado**: Grado del polinomio para Vandermonde (opcional, por defecto usa len(x)-1).
+    
+    **Retorna:**
+    - Resultados de cada método con tiempos de ejecución
+    - Gráfico comparativo de tiempos
+    - Gráfico visual comparando todas las curvas
+    - Análisis detallado con ventajas/desventajas de cada método
+    - Recomendación basada en el número de puntos
+    - Identificación del método más rápido
+    
+    **Características del Informe:**
+    - Tiempos de ejecución en milisegundos
+    - Complejidad algorítmica de cada método
+    - Ventajas y desventajas específicas
+    - Casos de uso recomendados
+    - Análisis adaptado al número de puntos proporcionados
+    
+    **Notas:**
+    - Los valores de x deben ser distintos entre sí
+    - Se requieren al menos 2 puntos
+    - El informe identifica el método más eficiente para el caso específico
+    - Incluye recomendaciones basadas en el fenómeno de Runge y estabilidad numérica
+    """
+    try:
+        # Validación básica
+        if len(request.x) > 8:
+            raise HTTPException(
+                status_code=400,
+                detail="Se permiten máximo 8 puntos para interpolación"
+            )
+        
+        if len(request.x) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="Se necesitan al menos 2 puntos para interpolación"
+            )
+        
+        # Ejecutar comparación
+        start_time = time.time()
+        resultado = service.comparar_metodos(
+            x=request.x,
+            y=request.y,
+            grado=request.grado
+        )
+        end_time = time.time()
+        
+        # Agregar tiempo total de comparación al mensaje si fue exitoso
+        if resultado["exito"]:
+            tiempo_total = end_time - start_time
+            resultado["mensaje"] += f" Tiempo total de comparación: {tiempo_total:.6f} segundos."
         
         return resultado
     

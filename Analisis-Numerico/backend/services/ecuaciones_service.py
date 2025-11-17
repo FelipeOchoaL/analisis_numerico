@@ -1388,3 +1388,390 @@ class EcuacionesService:
             titulo_grafica="Método de Raíces Múltiples",
             ayuda=ayuda_rm,
         )
+    
+    def comparar_metodos_ecuaciones(self, 
+                                    funcion: str,
+                                    x0: float = None,
+                                    x1: float = None,
+                                    xi: float = None,
+                                    xs: float = None,
+                                    tolerancia: float = 1e-7,
+                                    niter: int = 100,
+                                    funcion_g: str = None,
+                                    funcion_df: str = None,
+                                    funcion_ddf: str = None,
+                                    tipo_error: str = "absoluto") -> Dict[str, Any]:
+        """
+        Ejecuta todos los métodos aplicables de ecuaciones no lineales y genera un informe comparativo.
+        
+        Args:
+            funcion: Función f(x) principal
+            x0: Primer valor inicial (para punto fijo, newton, secante, raíces múltiples)
+            x1: Segundo valor inicial (para regla falsa, secante)
+            xi: Extremo izquierdo intervalo (para bisección)
+            xs: Extremo derecho intervalo (para bisección)
+            tolerancia: Tolerancia para todos los métodos
+            niter: Número máximo de iteraciones
+            funcion_g: Función g(x) para punto fijo (opcional)
+            funcion_df: Derivada f'(x) para Newton y Raíces Múltiples (opcional)
+            funcion_ddf: Segunda derivada f''(x) para Raíces Múltiples (opcional)
+            tipo_error: Tipo de error a usar
+            
+        Returns:
+            Diccionario con resultados comparativos
+        """
+        import time
+        
+        resultados = {}
+        tiempos = {}
+        
+        # 1. Bisección (requiere xi y xs)
+        if xi is not None and xs is not None:
+            try:
+                inicio = time.time()
+                resultado_biseccion = self.biseccion(xi, xs, tolerancia, niter, funcion, tipo_error)
+                fin = time.time()
+                tiempos["Bisección"] = fin - inicio
+                resultados["Bisección"] = {
+                    "exito": resultado_biseccion["exito"],
+                    "tiempo": tiempos["Bisección"],
+                    "resultado": resultado_biseccion.get("resultado"),
+                    "iteraciones": len(resultado_biseccion["iteraciones"]),
+                    "mensaje": resultado_biseccion["mensaje"]
+                }
+            except Exception as e:
+                resultados["Bisección"] = {
+                    "exito": False,
+                    "tiempo": 0,
+                    "resultado": None,
+                    "iteraciones": 0,
+                    "mensaje": f"Error: {str(e)}"
+                }
+        
+        # 2. Regla Falsa (requiere x0 y x1)
+        if x0 is not None and x1 is not None:
+            try:
+                inicio = time.time()
+                resultado_regla = self.regla_falsa(x0, x1, tolerancia, niter, funcion, tipo_error)
+                fin = time.time()
+                tiempos["Regla Falsa"] = fin - inicio
+                resultados["Regla Falsa"] = {
+                    "exito": resultado_regla["exito"],
+                    "tiempo": tiempos["Regla Falsa"],
+                    "resultado": resultado_regla.get("resultado"),
+                    "iteraciones": len(resultado_regla["iteraciones"]),
+                    "mensaje": resultado_regla["mensaje"]
+                }
+            except Exception as e:
+                resultados["Regla Falsa"] = {
+                    "exito": False,
+                    "tiempo": 0,
+                    "resultado": None,
+                    "iteraciones": 0,
+                    "mensaje": f"Error: {str(e)}"
+                }
+        
+        # 3. Punto Fijo (requiere x0 y funcion_g)
+        if x0 is not None and funcion_g is not None:
+            try:
+                inicio = time.time()
+                resultado_punto_fijo = self.punto_fijo(x0, tolerancia, niter, funcion, funcion_g, tipo_error)
+                fin = time.time()
+                tiempos["Punto Fijo"] = fin - inicio
+                resultados["Punto Fijo"] = {
+                    "exito": resultado_punto_fijo["exito"],
+                    "tiempo": tiempos["Punto Fijo"],
+                    "resultado": resultado_punto_fijo.get("resultado"),
+                    "iteraciones": len(resultado_punto_fijo["iteraciones"]),
+                    "mensaje": resultado_punto_fijo["mensaje"]
+                }
+            except Exception as e:
+                resultados["Punto Fijo"] = {
+                    "exito": False,
+                    "tiempo": 0,
+                    "resultado": None,
+                    "iteraciones": 0,
+                    "mensaje": f"Error: {str(e)}"
+                }
+        
+        # 4. Newton-Raphson (requiere x0 y funcion_df)
+        if x0 is not None and funcion_df is not None:
+            try:
+                inicio = time.time()
+                resultado_newton = self.newton_raphson(x0, tolerancia, niter, funcion, funcion_df, True, tipo_error)
+                fin = time.time()
+                tiempos["Newton-Raphson"] = fin - inicio
+                resultados["Newton-Raphson"] = {
+                    "exito": resultado_newton["exito"],
+                    "tiempo": tiempos["Newton-Raphson"],
+                    "resultado": resultado_newton.get("resultado"),
+                    "iteraciones": len(resultado_newton["iteraciones"]),
+                    "mensaje": resultado_newton["mensaje"]
+                }
+            except Exception as e:
+                resultados["Newton-Raphson"] = {
+                    "exito": False,
+                    "tiempo": 0,
+                    "resultado": None,
+                    "iteraciones": 0,
+                    "mensaje": f"Error: {str(e)}"
+                }
+        
+        # 5. Secante (requiere x0 y x1)
+        if x0 is not None and x1 is not None:
+            try:
+                inicio = time.time()
+                resultado_secante = self.secante(x0, x1, tolerancia, niter, funcion, True, tipo_error)
+                fin = time.time()
+                tiempos["Secante"] = fin - inicio
+                resultados["Secante"] = {
+                    "exito": resultado_secante["exito"],
+                    "tiempo": tiempos["Secante"],
+                    "resultado": resultado_secante.get("resultado"),
+                    "iteraciones": len(resultado_secante["iteraciones"]),
+                    "mensaje": resultado_secante["mensaje"]
+                }
+            except Exception as e:
+                resultados["Secante"] = {
+                    "exito": False,
+                    "tiempo": 0,
+                    "resultado": None,
+                    "iteraciones": 0,
+                    "mensaje": f"Error: {str(e)}"
+                }
+        
+        # 6. Raíces Múltiples (requiere x0, funcion_df y funcion_ddf)
+        if x0 is not None and funcion_df is not None and funcion_ddf is not None:
+            try:
+                inicio = time.time()
+                resultado_raices = self.raices_multiples(x0, tolerancia, niter, funcion, funcion_df, funcion_ddf, tipo_error)
+                fin = time.time()
+                tiempos["Raíces Múltiples"] = fin - inicio
+                resultados["Raíces Múltiples"] = {
+                    "exito": resultado_raices["exito"],
+                    "tiempo": tiempos["Raíces Múltiples"],
+                    "resultado": resultado_raices.get("resultado"),
+                    "iteraciones": len(resultado_raices["iteraciones"]),
+                    "mensaje": resultado_raices["mensaje"]
+                }
+            except Exception as e:
+                resultados["Raíces Múltiples"] = {
+                    "exito": False,
+                    "tiempo": 0,
+                    "resultado": None,
+                    "iteraciones": 0,
+                    "mensaje": f"Error: {str(e)}"
+                }
+        
+        # Verificar que al menos un método se ejecutó
+        if not resultados:
+            return {
+                "exito": False,
+                "mensaje": "No se pudo ejecutar ningún método. Verifique los parámetros proporcionados.",
+                "resultados": {},
+                "informe": None,
+                "grafico_comparativo_tiempos": None,
+                "grafico_comparativo_convergencia": None
+            }
+        
+        # Filtrar solo métodos exitosos
+        metodos_exitosos = {k: v for k, v in tiempos.items() if resultados[k]["exito"]}
+        
+        if not metodos_exitosos:
+            return {
+                "exito": False,
+                "mensaje": "Ningún método convergió exitosamente. Verifique los parámetros o intervalos.",
+                "resultados": resultados,
+                "informe": None,
+                "grafico_comparativo_tiempos": None,
+                "grafico_comparativo_convergencia": None
+            }
+        
+        # Encontrar el más rápido
+        metodo_mas_rapido = min(metodos_exitosos, key=metodos_exitosos.get)
+        tiempo_mas_rapido = metodos_exitosos[metodo_mas_rapido]
+        
+        # Encontrar el de menos iteraciones
+        iteraciones_dict = {k: resultados[k]["iteraciones"] for k in metodos_exitosos.keys()}
+        metodo_menos_iteraciones = min(iteraciones_dict, key=iteraciones_dict.get)
+        
+        # Generar análisis
+        analisis = self._generar_analisis_comparativo_ecuaciones(
+            resultados, metodos_exitosos, metodo_mas_rapido, metodo_menos_iteraciones
+        )
+        
+        # Crear gráficos
+        try:
+            grafico_tiempos = self._crear_grafico_tiempos_ecuaciones(metodos_exitosos)
+        except:
+            grafico_tiempos = None
+        
+        try:
+            grafico_convergencia = self._crear_grafico_convergencia_ecuaciones(resultados, metodos_exitosos)
+        except:
+            grafico_convergencia = None
+        
+        return {
+            "exito": True,
+            "mensaje": f"Comparación completada. {len(metodos_exitosos)} de {len(resultados)} métodos convergieron.",
+            "resultados": resultados,
+            "informe": analisis,
+            "grafico_comparativo_tiempos": grafico_tiempos,
+            "grafico_comparativo_convergencia": grafico_convergencia,
+            "metodo_mas_rapido": metodo_mas_rapido,
+            "tiempo_mas_rapido": tiempo_mas_rapido,
+            "metodo_menos_iteraciones": metodo_menos_iteraciones,
+            "total_metodos_exitosos": len(metodos_exitosos),
+            "total_metodos_ejecutados": len(resultados)
+        }
+    
+    def _generar_analisis_comparativo_ecuaciones(self, resultados, metodos_exitosos, 
+                                                 metodo_mas_rapido, metodo_menos_iteraciones) -> Dict:
+        """Genera análisis comparativo para métodos de ecuaciones no lineales."""
+        
+        analisis = {
+            "resumen": f"Se ejecutaron {len(resultados)} métodos, de los cuales {len(metodos_exitosos)} convergieron exitosamente.",
+            "metodo_mas_rapido": metodo_mas_rapido,
+            "metodo_menos_iteraciones": metodo_menos_iteraciones,
+            "recomendacion": "",
+            "caracteristicas": {}
+        }
+        
+        # Características de cada método ejecutado
+        if "Bisección" in metodos_exitosos:
+            analisis["caracteristicas"]["Bisección"] = {
+                "ventajas": ["Convergencia garantizada", "Robusto", "Simple"],
+                "desventajas": ["Lento", "Requiere intervalo con cambio de signo"],
+                "convergencia": "Lineal",
+                "mejor_uso": "Cuando se tiene un intervalo con cambio de signo"
+            }
+        
+        if "Regla Falsa" in metodos_exitosos:
+            analisis["caracteristicas"]["Regla Falsa"] = {
+                "ventajas": ["Más rápido que bisección", "Convergencia garantizada"],
+                "desventajas": ["Puede ser lento en ciertos casos", "Requiere intervalo"],
+                "convergencia": "Super-lineal",
+                "mejor_uso": "Similar a bisección pero más eficiente"
+            }
+        
+        if "Punto Fijo" in metodos_exitosos:
+            analisis["caracteristicas"]["Punto Fijo"] = {
+                "ventajas": ["Simple", "Versatil"],
+                "desventajas": ["Requiere g(x) adecuada", "Convergencia no garantizada"],
+                "convergencia": "Lineal (si |g'(x)| < 1)",
+                "mejor_uso": "Cuando se puede despejar x = g(x) fácilmente"
+            }
+        
+        if "Newton-Raphson" in metodos_exitosos:
+            analisis["caracteristicas"]["Newton-Raphson"] = {
+                "ventajas": ["Convergencia cuadrática", "Muy rápido cerca de la raíz"],
+                "desventajas": ["Requiere derivada", "Puede diverger"],
+                "convergencia": "Cuadrática",
+                "mejor_uso": "Cuando se tiene buen punto inicial y derivada disponible"
+            }
+        
+        if "Secante" in metodos_exitosos:
+            analisis["caracteristicas"]["Secante"] = {
+                "ventajas": ["No requiere derivada", "Rápido", "Convergencia super-lineal"],
+                "desventajas": ["Requiere dos puntos iniciales", "Menos estable que Newton"],
+                "convergencia": "Super-lineal (~1.618)",
+                "mejor_uso": "Alternativa a Newton cuando no se tiene derivada"
+            }
+        
+        if "Raíces Múltiples" in metodos_exitosos:
+            analisis["caracteristicas"]["Raíces Múltiples"] = {
+                "ventajas": ["Maneja raíces múltiples", "Convergencia cuadrática"],
+                "desventajas": ["Requiere f', f''", "Más complejo"],
+                "convergencia": "Cuadrática para raíces múltiples",
+                "mejor_uso": "Cuando se sospecha raíz de multiplicidad > 1"
+            }
+        
+        # Recomendación basada en resultados
+        if metodo_mas_rapido == metodo_menos_iteraciones:
+            analisis["recomendacion"] = (
+                f"{metodo_mas_rapido} fue el método más eficiente: el más rápido Y el que requirió menos iteraciones. "
+                f"Es la mejor opción para este problema específico."
+            )
+        else:
+            analisis["recomendacion"] = (
+                f"{metodo_mas_rapido} fue el más rápido, pero {metodo_menos_iteraciones} requirió menos iteraciones. "
+                f"Dependiendo de la prioridad (velocidad vs. eficiencia computacional), elija el más adecuado."
+            )
+        
+        # Análisis de convergencia
+        if "Newton-Raphson" in metodos_exitosos and resultados["Newton-Raphson"]["iteraciones"] < 10:
+            analisis["nota_convergencia"] = "Newton-Raphson mostró convergencia cuadrática típica (muy pocas iteraciones)."
+        elif "Bisección" in metodos_exitosos and resultados["Bisección"]["iteraciones"] > 20:
+            analisis["nota_convergencia"] = "Bisección requirió muchas iteraciones debido a su convergencia lineal."
+        
+        return analisis
+    
+    def _crear_grafico_tiempos_ecuaciones(self, tiempos_dict: Dict[str, float]) -> str:
+        """Crea gráfico de barras para tiempos de ejecución."""
+        plt.figure(figsize=(10, 6))
+        
+        metodos = list(tiempos_dict.keys())
+        tiempos = [t * 1000 for t in tiempos_dict.values()]  # Convertir a ms
+        
+        colores = ['#dc3545', '#28a745', '#007bff', '#ffc107', '#17a2b8', '#6c757d']
+        
+        barras = plt.bar(metodos, tiempos, color=colores[:len(metodos)], alpha=0.7, edgecolor='black')
+        
+        # Agregar valores sobre las barras
+        for barra in barras:
+            altura = barra.get_height()
+            plt.text(barra.get_x() + barra.get_width()/2., altura,
+                    f'{altura:.3f} ms',
+                    ha='center', va='bottom', fontweight='bold')
+        
+        plt.title('Comparación de Tiempos de Ejecución', fontsize=14, fontweight='bold')
+        plt.xlabel('Método', fontsize=12)
+        plt.ylabel('Tiempo (milisegundos)', fontsize=12)
+        plt.xticks(rotation=45, ha='right')
+        plt.grid(axis='y', alpha=0.3)
+        plt.tight_layout()
+        
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        string = base64.b64encode(buf.read()).decode()
+        img_uri = f"data:image/png;base64,{string}"
+        
+        plt.close()
+        
+        return img_uri
+    
+    def _crear_grafico_convergencia_ecuaciones(self, resultados, metodos_exitosos) -> str:
+        """Crea gráfico de barras para número de iteraciones."""
+        plt.figure(figsize=(10, 6))
+        
+        metodos = list(metodos_exitosos.keys())
+        iteraciones = [resultados[m]["iteraciones"] for m in metodos]
+        
+        colores = ['#dc3545', '#28a745', '#007bff', '#ffc107', '#17a2b8', '#6c757d']
+        
+        barras = plt.bar(metodos, iteraciones, color=colores[:len(metodos)], alpha=0.7, edgecolor='black')
+        
+        # Agregar valores sobre las barras
+        for barra in barras:
+            altura = barra.get_height()
+            plt.text(barra.get_x() + barra.get_width()/2., altura,
+                    f'{int(altura)}',
+                    ha='center', va='bottom', fontweight='bold')
+        
+        plt.title('Comparación de Iteraciones hasta Convergencia', fontsize=14, fontweight='bold')
+        plt.xlabel('Método', fontsize=12)
+        plt.ylabel('Número de Iteraciones', fontsize=12)
+        plt.xticks(rotation=45, ha='right')
+        plt.grid(axis='y', alpha=0.3)
+        plt.tight_layout()
+        
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        string = base64.b64encode(buf.read()).decode()
+        img_uri = f"data:image/png;base64,{string}"
+        
+        plt.close()
+        
+        return img_uri

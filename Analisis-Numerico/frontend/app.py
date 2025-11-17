@@ -260,5 +260,29 @@ def proxy_spline_cubico():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/comparar', methods=['POST'])
+def proxy_comparar():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/interpolacion/comparar",
+            json=request.json,
+            timeout=60  # Más tiempo porque ejecuta 5 métodos
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/ecuaciones/comparar', methods=['POST'])
+def proxy_comparar_ecuaciones():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/ecuaciones-no-lineales/comparar",
+            json=request.json,
+            timeout=60  # Más tiempo porque ejecuta múltiples métodos
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=3000)

@@ -978,4 +978,411 @@ class InterpolacionService:
         plt.close()
         
         return img_uri
+    
+    def comparar_metodos(self, x: List[float], y: List[float], grado: int = None) -> Dict:
+        """
+        Ejecuta todos los métodos de interpolación y genera un informe comparativo.
+        
+        Args:
+            x: Lista de valores x (coordenadas)
+            y: Lista de valores y (coordenadas)
+            grado: Grado para Vandermonde (opcional, por defecto usa len(x)-1)
+            
+        Returns:
+            Diccionario con resultados de todos los métodos y análisis comparativo
+        """
+        import time
+        
+        # Si no se especifica grado, usar el máximo (interpolación exacta)
+        if grado is None:
+            grado = len(x) - 1
+        
+        # Validaciones básicas
+        if len(set(x)) != len(x):
+            return {
+                "exito": False,
+                "mensaje": "Error: Los valores de x deben ser únicos para realizar la comparación.",
+                "resultados": None,
+                "informe": None,
+                "grafico_comparativo": None
+            }
+        
+        if len(x) != len(y):
+            return {
+                "exito": False,
+                "mensaje": f"Error: Las listas x e y deben tener el mismo tamaño.",
+                "resultados": None,
+                "informe": None,
+                "grafico_comparativo": None
+            }
+        
+        if len(x) < 2:
+            return {
+                "exito": False,
+                "mensaje": "Error: Se necesitan al menos 2 puntos para interpolación.",
+                "resultados": None,
+                "informe": None,
+                "grafico_comparativo": None
+            }
+        
+        resultados = {}
+        tiempos = {}
+        
+        # 1. Vandermonde
+        try:
+            inicio = time.time()
+            resultado_vander = self.vandermonde(x, y, grado)
+            fin = time.time()
+            tiempos["Vandermonde"] = fin - inicio
+            resultados["Vandermonde"] = {
+                "exito": resultado_vander["exito"],
+                "tiempo": tiempos["Vandermonde"],
+                "polinomio": resultado_vander.get("polinomio", "Error"),
+                "mensaje": resultado_vander["mensaje"]
+            }
+        except Exception as e:
+            tiempos["Vandermonde"] = 0
+            resultados["Vandermonde"] = {
+                "exito": False,
+                "tiempo": 0,
+                "polinomio": "Error en ejecución",
+                "mensaje": str(e)
+            }
+        
+        # 2. Newton
+        try:
+            inicio = time.time()
+            resultado_newton = self.newton_interpolante(x, y)
+            fin = time.time()
+            tiempos["Newton"] = fin - inicio
+            resultados["Newton"] = {
+                "exito": resultado_newton["exito"],
+                "tiempo": tiempos["Newton"],
+                "polinomio": resultado_newton.get("polinomio", "Error"),
+                "mensaje": resultado_newton["mensaje"]
+            }
+        except Exception as e:
+            tiempos["Newton"] = 0
+            resultados["Newton"] = {
+                "exito": False,
+                "tiempo": 0,
+                "polinomio": "Error en ejecución",
+                "mensaje": str(e)
+            }
+        
+        # 3. Lagrange
+        try:
+            inicio = time.time()
+            resultado_lagrange = self.lagrange(x, y)
+            fin = time.time()
+            tiempos["Lagrange"] = fin - inicio
+            resultados["Lagrange"] = {
+                "exito": resultado_lagrange["exito"],
+                "tiempo": tiempos["Lagrange"],
+                "polinomio": resultado_lagrange.get("polinomio", "Error"),
+                "mensaje": resultado_lagrange["mensaje"]
+            }
+        except Exception as e:
+            tiempos["Lagrange"] = 0
+            resultados["Lagrange"] = {
+                "exito": False,
+                "tiempo": 0,
+                "polinomio": "Error en ejecución",
+                "mensaje": str(e)
+            }
+        
+        # 4. Spline Lineal
+        try:
+            inicio = time.time()
+            resultado_spline_lin = self.spline_lineal(x, y)
+            fin = time.time()
+            tiempos["Spline Lineal"] = fin - inicio
+            resultados["Spline Lineal"] = {
+                "exito": resultado_spline_lin["exito"],
+                "tiempo": tiempos["Spline Lineal"],
+                "polinomio": f"{len(resultado_spline_lin.get('polinomios', []))} tramos lineales" if resultado_spline_lin["exito"] else "Error",
+                "mensaje": resultado_spline_lin["mensaje"],
+                "num_tramos": len(resultado_spline_lin.get("tramos", []))
+            }
+        except Exception as e:
+            tiempos["Spline Lineal"] = 0
+            resultados["Spline Lineal"] = {
+                "exito": False,
+                "tiempo": 0,
+                "polinomio": "Error en ejecución",
+                "mensaje": str(e),
+                "num_tramos": 0
+            }
+        
+        # 5. Spline Cúbico
+        try:
+            inicio = time.time()
+            resultado_spline_cub = self.spline_cubico(x, y)
+            fin = time.time()
+            tiempos["Spline Cúbico"] = fin - inicio
+            resultados["Spline Cúbico"] = {
+                "exito": resultado_spline_cub["exito"],
+                "tiempo": tiempos["Spline Cúbico"],
+                "polinomio": f"{len(resultado_spline_cub.get('polinomios', []))} tramos cúbicos" if resultado_spline_cub["exito"] else "Error",
+                "mensaje": resultado_spline_cub["mensaje"],
+                "num_tramos": len(resultado_spline_cub.get("tramos", []))
+            }
+        except Exception as e:
+            tiempos["Spline Cúbico"] = 0
+            resultados["Spline Cúbico"] = {
+                "exito": False,
+                "tiempo": 0,
+                "polinomio": "Error en ejecución",
+                "mensaje": str(e),
+                "num_tramos": 0
+            }
+        
+        # Generar análisis comparativo
+        metodos_exitosos = {k: v for k, v in tiempos.items() if resultados[k]["exito"] and v > 0}
+        
+        if not metodos_exitosos:
+            return {
+                "exito": False,
+                "mensaje": "Ningún método se ejecutó correctamente.",
+                "resultados": resultados,
+                "informe": None,
+                "grafico_comparativo": None
+            }
+        
+        # Encontrar el más rápido
+        metodo_mas_rapido = min(metodos_exitosos, key=metodos_exitosos.get)
+        tiempo_mas_rapido = metodos_exitosos[metodo_mas_rapido]
+        
+        # Encontrar el más lento
+        metodo_mas_lento = max(metodos_exitosos, key=metodos_exitosos.get)
+        tiempo_mas_lento = metodos_exitosos[metodo_mas_lento]
+        
+        # Generar análisis y recomendaciones
+        analisis = self._generar_analisis_comparativo(
+            x, y, grado, resultados, metodos_exitosos, 
+            metodo_mas_rapido, metodo_mas_lento
+        )
+        
+        # Crear gráfico comparativo de tiempos
+        try:
+            grafico_tiempos = self._crear_grafico_comparativo_tiempos(metodos_exitosos)
+        except:
+            grafico_tiempos = None
+        
+        # Crear gráfico visual comparativo
+        try:
+            grafico_visual = self._crear_grafico_comparativo_visual(
+                x, y, resultado_vander, resultado_newton, resultado_lagrange,
+                resultado_spline_lin, resultado_spline_cub
+            )
+        except:
+            grafico_visual = None
+        
+        return {
+            "exito": True,
+            "mensaje": f"Comparación completada. Se ejecutaron {len(metodos_exitosos)} de 5 métodos correctamente.",
+            "resultados": resultados,
+            "informe": analisis,
+            "grafico_comparativo_tiempos": grafico_tiempos,
+            "grafico_comparativo_visual": grafico_visual,
+            "metodo_mas_rapido": metodo_mas_rapido,
+            "tiempo_mas_rapido": tiempo_mas_rapido,
+            "total_metodos_exitosos": len(metodos_exitosos)
+        }
+    
+    def _generar_analisis_comparativo(self, x, y, grado, resultados, metodos_exitosos, 
+                                      metodo_mas_rapido, metodo_mas_lento) -> Dict:
+        """Genera un análisis detallado comparando los métodos."""
+        n = len(x)
+        
+        analisis = {
+            "resumen": f"Se interpolaron {n} puntos usando {len(metodos_exitosos)} métodos diferentes.",
+            "metodo_mas_rapido": metodo_mas_rapido,
+            "metodo_mas_lento": metodo_mas_lento,
+            "diferencia_tiempo": metodos_exitosos[metodo_mas_lento] - metodos_exitosos[metodo_mas_rapido],
+            "recomendacion": "",
+            "caracteristicas": {}
+        }
+        
+        # Análisis de características
+        if "Vandermonde" in metodos_exitosos:
+            analisis["caracteristicas"]["Vandermonde"] = {
+                "ventajas": ["Implementación directa", "Resuelve sistema lineal"],
+                "desventajas": ["Inestable para grados altos", "Matriz mal condicionada"],
+                "complejidad": "O(n³)",
+                "mejor_uso": "Pocos puntos (n < 10) y grados bajos"
+            }
+        
+        if "Newton" in metodos_exitosos:
+            analisis["caracteristicas"]["Newton"] = {
+                "ventajas": ["Estable numéricamente", "Eficiente", "Incremental"],
+                "desventajas": ["Requiere ordenamiento", "Tabla de diferencias"],
+                "complejidad": "O(n²)",
+                "mejor_uso": "Interpolación general, datos ordenados"
+            }
+        
+        if "Lagrange" in metodos_exitosos:
+            analisis["caracteristicas"]["Lagrange"] = {
+                "ventajas": ["Conceptualmente simple", "No requiere resolver sistemas", "Estable"],
+                "desventajas": ["Costoso para evaluación múltiple", "No es incremental"],
+                "complejidad": "O(n²) para construcción, O(n²) para evaluación",
+                "mejor_uso": "Pocas evaluaciones, fines didácticos"
+            }
+        
+        if "Spline Lineal" in metodos_exitosos:
+            analisis["caracteristicas"]["Spline Lineal"] = {
+                "ventajas": ["Muy rápido", "Simple", "No oscila"],
+                "desventajas": ["No suave (no derivable en nodos)", "Poco preciso"],
+                "complejidad": "O(n)",
+                "mejor_uso": "Datos con cambios abruptos, velocidad prioritaria"
+            }
+        
+        if "Spline Cúbico" in metodos_exitosos:
+            analisis["caracteristicas"]["Spline Cúbico"] = {
+                "ventajas": ["Muy suave (C²)", "Estable", "No oscila", "Profesional"],
+                "desventajas": ["Más costoso que lineal", "Requiere resolver sistema"],
+                "complejidad": "O(n)",
+                "mejor_uso": "Gráficos, CAD, datos suaves, producción"
+            }
+        
+        # Generar recomendación basada en el contexto
+        if n <= 4:
+            analisis["recomendacion"] = (
+                f"Con {n} puntos, cualquier método polinomial (Vandermonde, Newton, Lagrange) es adecuado. "
+                f"Newton es el más equilibrado en velocidad y estabilidad. "
+                f"Spline Cúbico ofrece la curva más suave."
+            )
+        elif n <= 8:
+            analisis["recomendacion"] = (
+                f"Con {n} puntos, se recomienda Newton o Lagrange para interpolación polinomial exacta. "
+                f"Para curvas suaves, Spline Cúbico es la mejor opción. "
+                f"Evitar Vandermonde por posibles problemas numéricos."
+            )
+        else:
+            analisis["recomendacion"] = (
+                f"Con {n} puntos, los métodos por tramos (Splines) son superiores. "
+                f"Spline Cúbico ofrece el mejor balance entre suavidad y estabilidad. "
+                f"Los métodos polinomiales pueden presentar oscilaciones (fenómeno de Runge)."
+            )
+        
+        # Agregar análisis específico del caso
+        if metodo_mas_rapido == "Spline Lineal":
+            analisis["nota_velocidad"] = "Spline Lineal fue el más rápido debido a su simplicidad (conexiones lineales)."
+        elif metodo_mas_rapido == "Newton":
+            analisis["nota_velocidad"] = "Newton fue el más rápido gracias a su eficiencia algorítmica (diferencias divididas)."
+        elif metodo_mas_rapido == "Spline Cúbico":
+            analisis["nota_velocidad"] = "Spline Cúbico fue sorprendentemente rápido considerando su suavidad C²."
+        
+        return analisis
+    
+    def _crear_grafico_comparativo_tiempos(self, tiempos_dict: Dict[str, float]) -> str:
+        """Crea un gráfico de barras comparando los tiempos de ejecución."""
+        plt.figure(figsize=(10, 6))
+        
+        metodos = list(tiempos_dict.keys())
+        tiempos = [t * 1000 for t in tiempos_dict.values()]  # Convertir a milisegundos
+        
+        colores = ['#dc3545', '#28a745', '#007bff', '#ffc107', '#6c757d']
+        
+        barras = plt.bar(metodos, tiempos, color=colores[:len(metodos)], alpha=0.7, edgecolor='black')
+        
+        # Agregar valores sobre las barras
+        for barra in barras:
+            altura = barra.get_height()
+            plt.text(barra.get_x() + barra.get_width()/2., altura,
+                    f'{altura:.3f} ms',
+                    ha='center', va='bottom', fontweight='bold')
+        
+        plt.title('Comparación de Tiempos de Ejecución', fontsize=14, fontweight='bold')
+        plt.xlabel('Método de Interpolación', fontsize=12)
+        plt.ylabel('Tiempo (milisegundos)', fontsize=12)
+        plt.xticks(rotation=45, ha='right')
+        plt.grid(axis='y', alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir a base64
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        string = base64.b64encode(buf.read()).decode()
+        img_uri = f"data:image/png;base64,{string}"
+        
+        plt.close()
+        
+        return img_uri
+    
+    def _crear_grafico_comparativo_visual(self, x, y, res_vander, res_newton, res_lagrange,
+                                         res_spline_lin, res_spline_cub) -> str:
+        """Crea un gráfico visual comparando todas las curvas de interpolación."""
+        plt.figure(figsize=(14, 8))
+        
+        x_arr = np.array(x)
+        y_arr = np.array(y)
+        
+        # Puntos originales
+        plt.plot(x, y, 'ko', markersize=10, label='Puntos Datos', zorder=10)
+        
+        # Rango para graficar
+        x_min, x_max = min(x), max(x)
+        x_plot = np.linspace(x_min, x_max, 300)
+        
+        # Vandermonde (si exitoso)
+        if res_vander["exito"] and res_vander.get("coeficientes"):
+            coef = res_vander["coeficientes"]
+            y_vander = np.polyval(coef[::-1], x_plot)
+            plt.plot(x_plot, y_vander, 'r-', linewidth=2, label='Vandermonde', alpha=0.7)
+        
+        # Newton y Lagrange producen el mismo polinomio, así que solo graficamos uno
+        if res_newton["exito"] and res_newton.get("coeficientes"):
+            coef = res_newton["coeficientes"]
+            y_newton = np.polyval(coef[::-1], x_plot)
+            plt.plot(x_plot, y_newton, 'g--', linewidth=2, label='Newton/Lagrange', alpha=0.7)
+        elif res_lagrange["exito"] and res_lagrange.get("coeficientes"):
+            coef = res_lagrange["coeficientes"]
+            y_lagrange = np.polyval(coef[::-1], x_plot)
+            plt.plot(x_plot, y_lagrange, 'b--', linewidth=2, label='Lagrange', alpha=0.7)
+        
+        # Spline Lineal
+        if res_spline_lin["exito"] and res_spline_lin.get("tramos"):
+            for tramo in res_spline_lin["tramos"]:
+                coefs = tramo["coeficientes"]  # [m, b]
+                idx = tramo["tramo"] - 1
+                if idx < len(x) - 1:
+                    x_tramo = np.linspace(x_arr[idx], x_arr[idx+1], 50)
+                    y_tramo = coefs[0] * x_tramo + coefs[1]
+                    if idx == 0:
+                        plt.plot(x_tramo, y_tramo, 'orange', linewidth=2, label='Spline Lineal')
+                    else:
+                        plt.plot(x_tramo, y_tramo, 'orange', linewidth=2)
+        
+        # Spline Cúbico
+        if res_spline_cub["exito"] and res_spline_cub.get("tramos"):
+            for tramo in res_spline_cub["tramos"]:
+                coefs = tramo["coeficientes"]  # [a, b, c, d]
+                idx = tramo["tramo"] - 1
+                if idx < len(x) - 1:
+                    x_tramo = np.linspace(x_arr[idx], x_arr[idx+1], 50)
+                    y_tramo = coefs[0]*x_tramo**3 + coefs[1]*x_tramo**2 + coefs[2]*x_tramo + coefs[3]
+                    if idx == 0:
+                        plt.plot(x_tramo, y_tramo, 'm-', linewidth=2.5, label='Spline Cúbico')
+                    else:
+                        plt.plot(x_tramo, y_tramo, 'm-', linewidth=2.5)
+        
+        plt.title('Comparación Visual de Métodos de Interpolación', fontsize=14, fontweight='bold')
+        plt.xlabel('x', fontsize=12)
+        plt.ylabel('y', fontsize=12)
+        plt.legend(fontsize=10, loc='best')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir a base64
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        string = base64.b64encode(buf.read()).decode()
+        img_uri = f"data:image/png;base64,{string}"
+        
+        plt.close()
+        
+        return img_uri
 

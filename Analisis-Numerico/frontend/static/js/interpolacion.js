@@ -1374,3 +1374,299 @@ function cargarEjemploSplineCubicoCubico() {
     document.getElementById('y-splinecub-4').value = -3;
 }
 
+// ==================== COMPARACIÓN DE MÉTODOS ====================
+
+let puntosCountComparacion = 0;
+
+// Inicializar Comparación cuando se active el tab
+document.getElementById('comparacion-tab').addEventListener('shown.bs.tab', function() {
+    if (puntosCountComparacion === 0) {
+        agregarPuntoComparacion();
+        agregarPuntoComparacion();
+        agregarPuntoComparacion();
+    }
+});
+
+function agregarPuntoComparacion() {
+    if (puntosCountComparacion >= MAX_PUNTOS) {
+        alert(`Solo se permiten máximo ${MAX_PUNTOS} puntos`);
+        return;
+    }
+    
+    puntosCountComparacion++;
+    const container = document.getElementById('puntosContainerComparacion');
+    const puntoDiv = document.createElement('div');
+    puntoDiv.className = 'input-group mb-2';
+    puntoDiv.id = `punto-comparacion-${puntosCountComparacion}`;
+    
+    puntoDiv.innerHTML = `
+        <span class="input-group-text">#${puntosCountComparacion}</span>
+        <span class="input-group-text">x:</span>
+        <input type="number" step="any" class="form-control punto-input" 
+               id="x-comparacion-${puntosCountComparacion}" placeholder="x${puntosCountComparacion}" required>
+        <span class="input-group-text">y:</span>
+        <input type="number" step="any" class="form-control punto-input" 
+               id="y-comparacion-${puntosCountComparacion}" placeholder="y${puntosCountComparacion}" required>
+        <button type="button" class="btn btn-danger btn-sm" 
+                onclick="eliminarPuntoComparacion(${puntosCountComparacion})">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    container.appendChild(puntoDiv);
+    actualizarContadorComparacion();
+    actualizarBotonAgregarComparacion();
+}
+
+function eliminarPuntoComparacion(id) {
+    if (puntosCountComparacion <= 2) {
+        alert('Debe haber al menos 2 puntos');
+        return;
+    }
+    
+    const punto = document.getElementById(`punto-comparacion-${id}`);
+    if (punto) {
+        punto.remove();
+        puntosCountComparacion--;
+        renumerarPuntosComparacion();
+        actualizarContadorComparacion();
+        actualizarBotonAgregarComparacion();
+    }
+}
+
+function renumerarPuntosComparacion() {
+    const container = document.getElementById('puntosContainerComparacion');
+    const puntos = container.children;
+    puntosCountComparacion = 0;
+    
+    Array.from(puntos).forEach((punto, index) => {
+        puntosCountComparacion++;
+        const newId = puntosCountComparacion;
+        punto.id = `punto-comparacion-${newId}`;
+        
+        const number = punto.querySelector('.input-group-text');
+        number.textContent = `#${newId}`;
+        
+        const xInput = punto.querySelector('input[id^="x-comparacion-"]');
+        const yInput = punto.querySelector('input[id^="y-comparacion-"]');
+        const xValue = xInput.value;
+        const yValue = yInput.value;
+        
+        xInput.id = `x-comparacion-${newId}`;
+        yInput.id = `y-comparacion-${newId}`;
+        xInput.value = xValue;
+        yInput.value = yValue;
+        xInput.placeholder = `x${newId}`;
+        yInput.placeholder = `y${newId}`;
+        
+        const deleteBtn = punto.querySelector('button');
+        deleteBtn.setAttribute('onclick', `eliminarPuntoComparacion(${newId})`);
+    });
+}
+
+function actualizarContadorComparacion() {
+    document.getElementById('contadorPuntosComparacion').textContent = puntosCountComparacion;
+}
+
+function actualizarBotonAgregarComparacion() {
+    const btn = document.getElementById('btnAgregarPuntoComparacion');
+    btn.disabled = puntosCountComparacion >= MAX_PUNTOS;
+}
+
+// Event listener para el botón de agregar punto
+document.addEventListener('DOMContentLoaded', function() {
+    const btnAgregar = document.getElementById('btnAgregarPuntoComparacion');
+    if (btnAgregar) {
+        btnAgregar.addEventListener('click', agregarPuntoComparacion);
+    }
+});
+
+async function compararMetodos() {
+    // Ocultar resultados y errores anteriores
+    document.getElementById('resultadoComparacion').style.display = 'none';
+    document.getElementById('errorDivComparacion').style.display = 'none';
+    document.getElementById('loadingComparacion').style.display = 'block';
+    
+    // Obtener valores
+    const x = [];
+    const y = [];
+    
+    for (let i = 1; i <= puntosCountComparacion; i++) {
+        const xVal = parseFloat(document.getElementById(`x-comparacion-${i}`).value);
+        const yVal = parseFloat(document.getElementById(`y-comparacion-${i}`).value);
+        x.push(xVal);
+        y.push(yVal);
+    }
+    
+    const gradoInput = document.getElementById('gradoComparacion').value;
+    const grado = gradoInput ? parseInt(gradoInput) : null;
+    
+    try {
+        const response = await fetch('/api/comparar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ x, y, grado })
+        });
+        
+        const data = await response.json();
+        document.getElementById('loadingComparacion').style.display = 'none';
+        
+        if (data.exito) {
+            mostrarResultadoComparacion(data);
+        } else {
+            mostrarErrorComparacion(data.mensaje);
+        }
+    } catch (error) {
+        document.getElementById('loadingComparacion').style.display = 'none';
+        mostrarErrorComparacion('Error de conexión con el servidor: ' + error.message);
+    }
+}
+
+function mostrarResultadoComparacion(data) {
+    // Resumen
+    const resumenHTML = `
+        <strong>${data.mensaje}</strong><br>
+        <i class="fas fa-trophy text-warning"></i> <strong>Método más rápido:</strong> ${data.metodo_mas_rapido} 
+        (${(data.tiempo_mas_rapido * 1000).toFixed(3)} ms)<br>
+        <i class="fas fa-check-circle text-success"></i> <strong>Métodos exitosos:</strong> ${data.total_metodos_exitosos} de 5
+    `;
+    document.getElementById('resumenComparacion').innerHTML = resumenHTML;
+    
+    // Gráficos
+    if (data.grafico_comparativo_tiempos) {
+        document.getElementById('graficoTiemposComparacion').src = data.grafico_comparativo_tiempos;
+    }
+    
+    if (data.grafico_comparativo_visual) {
+        document.getElementById('graficoVisualComparacion').src = data.grafico_comparativo_visual;
+    }
+    
+    // Tabla de resultados
+    const tbody = document.querySelector('#tablaResultadosComparacion tbody');
+    tbody.innerHTML = '';
+    
+    for (const [metodo, resultado] of Object.entries(data.resultados)) {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td><strong>${metodo}</strong></td>
+            <td>${resultado.exito ? '<span class="badge bg-success">Exitoso</span>' : '<span class="badge bg-danger">Error</span>'}</td>
+            <td>${resultado.exito ? (resultado.tiempo * 1000).toFixed(3) + ' ms' : 'N/A'}</td>
+            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${resultado.polinomio}</td>
+        `;
+        if (metodo === data.metodo_mas_rapido) {
+            row.classList.add('table-success');
+        }
+    }
+    
+    // Recomendación
+    document.getElementById('recomendacionComparacion').innerHTML = data.informe.recomendacion;
+    if (data.informe.nota_velocidad) {
+        document.getElementById('recomendacionComparacion').innerHTML += '<br><br><em>' + data.informe.nota_velocidad + '</em>';
+    }
+    
+    // Características
+    const accordion = document.getElementById('accordionCaracteristicas');
+    accordion.innerHTML = '';
+    
+    let index = 0;
+    for (const [metodo, caract] of Object.entries(data.informe.caracteristicas)) {
+        const accordionItem = `
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading${index}">
+                    <button class="accordion-button ${index !== 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapse${index}" aria-expanded="${index === 0 ? 'true' : 'false'}">
+                        <strong>${metodo}</strong> - ${caract.complejidad}
+                    </button>
+                </h2>
+                <div id="collapse${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" 
+                     aria-labelledby="heading${index}" data-bs-parent="#accordionCaracteristicas">
+                    <div class="accordion-body">
+                        <p><strong><i class="fas fa-thumbs-up text-success"></i> Ventajas:</strong></p>
+                        <ul>
+                            ${caract.ventajas.map(v => `<li>${v}</li>`).join('')}
+                        </ul>
+                        <p><strong><i class="fas fa-thumbs-down text-danger"></i> Desventajas:</strong></p>
+                        <ul>
+                            ${caract.desventajas.map(d => `<li>${d}</li>`).join('')}
+                        </ul>
+                        <p><strong><i class="fas fa-star text-warning"></i> Mejor uso:</strong> ${caract.mejor_uso}</p>
+                        <p><strong><i class="fas fa-code text-info"></i> Complejidad:</strong> ${caract.complejidad}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        accordion.innerHTML += accordionItem;
+        index++;
+    }
+    
+    // Mostrar resultados
+    document.getElementById('resultadoComparacion').style.display = 'block';
+}
+
+function mostrarErrorComparacion(mensaje) {
+    document.getElementById('errorMensajeComparacion').textContent = mensaje;
+    document.getElementById('errorDivComparacion').style.display = 'block';
+}
+
+function limpiarFormularioComparacion() {
+    // Eliminar todos los puntos
+    const container = document.getElementById('puntosContainerComparacion');
+    container.innerHTML = '';
+    puntosCountComparacion = 0;
+    
+    // Agregar 3 puntos por defecto
+    agregarPuntoComparacion();
+    agregarPuntoComparacion();
+    agregarPuntoComparacion();
+    
+    // Limpiar grado
+    document.getElementById('gradoComparacion').value = '';
+    
+    // Ocultar resultados y errores
+    document.getElementById('resultadoComparacion').style.display = 'none';
+    document.getElementById('errorDivComparacion').style.display = 'none';
+}
+
+// Funciones para cargar ejemplos de Comparación
+function cargarEjemploComparacionLineal() {
+    limpiarFormularioComparacion();
+    
+    // Eliminar un punto (solo necesitamos 2)
+    eliminarPuntoComparacion(3);
+    
+    document.getElementById('x-comparacion-1').value = 0;
+    document.getElementById('y-comparacion-1').value = 2;
+    document.getElementById('x-comparacion-2').value = 5;
+    document.getElementById('y-comparacion-2').value = 12;
+}
+
+function cargarEjemploComparacionCuadratico() {
+    limpiarFormularioComparacion();
+    
+    document.getElementById('x-comparacion-1').value = 0;
+    document.getElementById('y-comparacion-1').value = 0;
+    document.getElementById('x-comparacion-2').value = 1;
+    document.getElementById('y-comparacion-2').value = 1;
+    document.getElementById('x-comparacion-3').value = 2;
+    document.getElementById('y-comparacion-3').value = 4;
+}
+
+function cargarEjemploComparacionComplejo() {
+    limpiarFormularioComparacion();
+    agregarPuntoComparacion();
+    agregarPuntoComparacion();
+    
+    document.getElementById('x-comparacion-1').value = -2;
+    document.getElementById('y-comparacion-1').value = 4;
+    document.getElementById('x-comparacion-2').value = -1;
+    document.getElementById('y-comparacion-2').value = 1;
+    document.getElementById('x-comparacion-3').value = 0;
+    document.getElementById('y-comparacion-3').value = 0;
+    document.getElementById('x-comparacion-4').value = 1;
+    document.getElementById('y-comparacion-4').value = 1;
+    document.getElementById('x-comparacion-5').value = 2;
+    document.getElementById('y-comparacion-5').value = 4;
+}
+

@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException
 from models.schemas import (
     BiseccionRequest, PuntoFijoRequest, ReglaFalsaRequest, 
     BusquedaIncrementalRequest, NewtonRaphsonRequest, SecanteRequest, 
-    RaicesMultiplesRequest, MetodoResponse
+    RaicesMultiplesRequest, MetodoResponse,
+    ComparacionEcuacionesRequest, ComparacionEcuacionesResponse
 )
 from services.ecuaciones_service import EcuacionesService
 import time
@@ -234,6 +235,45 @@ async def metodo_raices_multiples(request: RaicesMultiplesRequest):
         end_time = time.time()
         
         resultado["tiempo_ejecucion"] = end_time - start_time
+        return resultado
+    
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/comparar", response_model=ComparacionEcuacionesResponse)
+async def comparar_metodos_ecuaciones(request: ComparacionEcuacionesRequest):
+    """
+    Ejecuta todos los métodos aplicables de ecuaciones no lineales y genera un informe comparativo.
+    
+    Se ejecutarán los métodos según los parámetros proporcionados:
+    - **Bisección**: Requiere xi y xs
+    - **Regla Falsa**: Requiere x0 y x1
+    - **Punto Fijo**: Requiere x0 y funcion_g
+    - **Newton-Raphson**: Requiere x0 y funcion_df
+    - **Secante**: Requiere x0 y x1
+    - **Raíces Múltiples**: Requiere x0, funcion_df y funcion_ddf
+    
+    El informe incluye:
+    - Tiempos de ejecución
+    - Número de iteraciones
+    - Análisis comparativo
+    - Recomendaciones
+    - Gráficos comparativos
+    """
+    try:
+        resultado = service.comparar_metodos_ecuaciones(
+            funcion=request.funcion,
+            x0=request.x0,
+            x1=request.x1,
+            xi=request.xi,
+            xs=request.xs,
+            tolerancia=request.tolerancia,
+            niter=request.niter,
+            funcion_g=request.funcion_g,
+            funcion_df=request.funcion_df,
+            funcion_ddf=request.funcion_ddf,
+            tipo_error=request.tipo_error
+        )
         return resultado
     
     except Exception as e:

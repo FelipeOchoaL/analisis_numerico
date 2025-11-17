@@ -156,3 +156,46 @@ class SplineResponse(BaseModel):
     grafico: Optional[str] = None
     mensaje: str
     tramos: Optional[List[dict]] = None
+
+class ComparacionRequest(BaseModel):
+    x: List[float] = Field(..., description="Lista de valores x (hasta 8 puntos)")
+    y: List[float] = Field(..., description="Lista de valores y (hasta 8 puntos)")
+    grado: Optional[int] = Field(None, description="Grado para Vandermonde (opcional)")
+
+class ComparacionResponse(BaseModel):
+    exito: bool
+    mensaje: str
+    resultados: Optional[dict] = None
+    informe: Optional[dict] = None
+    grafico_comparativo_tiempos: Optional[str] = None
+    grafico_comparativo_visual: Optional[str] = None
+    metodo_mas_rapido: Optional[str] = None
+    tiempo_mas_rapido: Optional[float] = None
+    total_metodos_exitosos: Optional[int] = None
+
+# Modelos para Comparación de Ecuaciones No Lineales
+class ComparacionEcuacionesRequest(BaseModel):
+    funcion: str = Field(..., description="Función f(x) principal")
+    x0: Optional[float] = Field(None, description="Primer valor inicial")
+    x1: Optional[float] = Field(None, description="Segundo valor inicial")
+    xi: Optional[float] = Field(None, description="Extremo izquierdo del intervalo (bisección)")
+    xs: Optional[float] = Field(None, description="Extremo derecho del intervalo (bisección)")
+    tolerancia: float = Field(1e-7, gt=0, description="Tolerancia para todos los métodos")
+    niter: int = Field(100, gt=0, description="Número máximo de iteraciones")
+    funcion_g: Optional[str] = Field(None, description="Función g(x) para punto fijo")
+    funcion_df: Optional[str] = Field(None, description="Derivada f'(x)")
+    funcion_ddf: Optional[str] = Field(None, description="Segunda derivada f''(x)")
+    tipo_error: str = Field("absoluto", description="Tipo de error: 'absoluto' o 'relativo'")
+
+class ComparacionEcuacionesResponse(BaseModel):
+    exito: bool
+    mensaje: str
+    resultados: Optional[dict] = None
+    informe: Optional[dict] = None
+    grafico_comparativo_tiempos: Optional[str] = None
+    grafico_comparativo_convergencia: Optional[str] = None
+    metodo_mas_rapido: Optional[str] = None
+    tiempo_mas_rapido: Optional[float] = None
+    metodo_menos_iteraciones: Optional[str] = None
+    total_metodos_exitosos: Optional[int] = None
+    total_metodos_ejecutados: Optional[int] = None

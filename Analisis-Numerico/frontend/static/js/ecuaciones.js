@@ -736,3 +736,234 @@ function generarTablaIteraciones(iteraciones) {
 
     return html;
 }
+
+// ====================================
+// COMPARACIÓN DE MÉTODOS
+// ====================================
+
+document.getElementById('comparacionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Mostrar loading
+    document.getElementById('comparacionResultados').style.display = 'block';
+    document.getElementById('comparacionLoading').style.display = 'block';
+    document.getElementById('comparacionError').style.display = 'none';
+    document.getElementById('comparacionResumen').innerHTML = '';
+    document.getElementById('comparacionTabla').innerHTML = '';
+    document.getElementById('comparacionRecomendacion').innerHTML = '';
+    document.getElementById('comparacionCaracteristicas').innerHTML = '';
+    document.getElementById('comparacionGraficoTiempos').innerHTML = '';
+    document.getElementById('comparacionGraficoConvergencia').innerHTML = '';
+    
+    const data = {
+        funcion: document.getElementById('comp_funcion').value,
+        x0: document.getElementById('comp_x0').value ? parseFloat(document.getElementById('comp_x0').value) : null,
+        x1: document.getElementById('comp_x1').value ? parseFloat(document.getElementById('comp_x1').value) : null,
+        xi: document.getElementById('comp_xi').value ? parseFloat(document.getElementById('comp_xi').value) : null,
+        xs: document.getElementById('comp_xs').value ? parseFloat(document.getElementById('comp_xs').value) : null,
+        tolerancia: parseFloat(document.getElementById('comp_tolerancia').value),
+        niter: parseInt(document.getElementById('comp_niter').value),
+        funcion_g: document.getElementById('comp_funcion_g').value || null,
+        funcion_df: document.getElementById('comp_funcion_df').value || null,
+        funcion_ddf: document.getElementById('comp_funcion_ddf').value || null,
+        tipo_error: document.getElementById('comp_tipo_error').value
+    };
+    
+    try {
+        const response = await fetch('/api/ecuaciones/comparar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const resultado = await response.json();
+        document.getElementById('comparacionLoading').style.display = 'none';
+        
+        if (response.ok && resultado.exito) {
+            mostrarResultadoComparacion(resultado);
+        } else {
+            mostrarErrorComparacion(resultado.mensaje || resultado.detail || 'Error en la comparación');
+        }
+    } catch (error) {
+        document.getElementById('comparacionLoading').style.display = 'none';
+        mostrarErrorComparacion('Error de conexión: ' + error.message);
+    }
+});
+
+function mostrarResultadoComparacion(data) {
+    // Resumen
+    const resumenHTML = `
+        <div class="alert alert-success">
+            <h5><i class="fas fa-check-circle"></i> ${data.mensaje}</h5>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong><i class="fas fa-bolt text-warning"></i> Método más rápido:</strong> 
+                    ${data.metodo_mas_rapido} (${(data.tiempo_mas_rapido * 1000).toFixed(3)} ms)</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong><i class="fas fa-compress-arrows-alt text-primary"></i> Menos iteraciones:</strong> 
+                    ${data.metodo_menos_iteraciones}</p>
+                </div>
+            </div>
+            <p class="mb-0"><strong><i class="fas fa-check text-success"></i> Métodos exitosos:</strong> 
+            ${data.total_metodos_exitosos} de ${data.total_metodos_ejecutados}</p>
+        </div>
+    `;
+    document.getElementById('comparacionResumen').innerHTML = resumenHTML;
+    
+    // Gráficos
+    if (data.grafico_comparativo_tiempos) {
+        document.getElementById('comparacionGraficoTiempos').innerHTML = `
+            <h6><i class="fas fa-clock"></i> Tiempos de Ejecución</h6>
+            <img src="${data.grafico_comparativo_tiempos}" class="img-fluid" alt="Gráfico de Tiempos">
+        `;
+    }
+    
+    if (data.grafico_comparativo_convergencia) {
+        document.getElementById('comparacionGraficoConvergencia').innerHTML = `
+            <h6><i class="fas fa-chart-line"></i> Iteraciones hasta Convergencia</h6>
+            <img src="${data.grafico_comparativo_convergencia}" class="img-fluid" alt="Gráfico de Convergencia">
+        `;
+    }
+    
+    // Tabla de resultados
+    let tablaHTML = `
+        <h6><i class="fas fa-table"></i> Resultados Detallados</h6>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Método</th>
+                        <th>Estado</th>
+                        <th>Tiempo (ms)</th>
+                        <th>Iteraciones</th>
+                        <th>Resultado</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    for (const [metodo, resultado] of Object.entries(data.resultados)) {
+        const esRapido = metodo === data.metodo_mas_rapido;
+        const esMenosIteraciones = metodo === data.metodo_menos_iteraciones;
+        const claseRow = esRapido ? 'table-success' : (esMenosIteraciones ? 'table-info' : '');
+        
+        tablaHTML += `
+            <tr class="${claseRow}">
+                <td><strong>${metodo}</strong>
+                    ${esRapido ? ' <i class="fas fa-trophy text-warning"></i>' : ''}
+                    ${esMenosIteraciones ? ' <i class="fas fa-medal text-info"></i>' : ''}
+                </td>
+                <td>${resultado.exito ? '<span class="badge bg-success">Exitoso</span>' : '<span class="badge bg-danger">Error</span>'}</td>
+                <td>${resultado.exito ? (resultado.tiempo * 1000).toFixed(3) : 'N/A'}</td>
+                <td>${resultado.exito ? resultado.iteraciones : 'N/A'}</td>
+                <td>${resultado.exito && resultado.resultado !== null ? resultado.resultado.toFixed(8) : 'N/A'}</td>
+            </tr>
+        `;
+    }
+    
+    tablaHTML += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    document.getElementById('comparacionTabla').innerHTML = tablaHTML;
+    
+    // Recomendación
+    let recomendacionHTML = `
+        <div class="alert alert-info">
+            <h5><i class="fas fa-lightbulb"></i> Recomendación</h5>
+            <p>${data.informe.recomendacion}</p>
+    `;
+    
+    if (data.informe.nota_convergencia) {
+        recomendacionHTML += `<p><em>${data.informe.nota_convergencia}</em></p>`;
+    }
+    
+    recomendacionHTML += `</div>`;
+    document.getElementById('comparacionRecomendacion').innerHTML = recomendacionHTML;
+    
+    // Características detalladas (Accordion)
+    let caracteristicasHTML = `
+        <h6><i class="fas fa-info-circle"></i> Características Detalladas de los Métodos</h6>
+        <div class="accordion" id="accordionCaracteristicas">
+    `;
+    
+    let index = 0;
+    for (const [metodo, caracteristicas] of Object.entries(data.informe.caracteristicas)) {
+        const accordionId = `accordion${index}`;
+        caracteristicasHTML += `
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading${index}">
+                    <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" 
+                            data-bs-toggle="collapse" data-bs-target="#${accordionId}" 
+                            aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="${accordionId}">
+                        <strong>${metodo}</strong>
+                    </button>
+                </h2>
+                <div id="${accordionId}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" 
+                     aria-labelledby="heading${index}" data-bs-parent="#accordionCaracteristicas">
+                    <div class="accordion-body">
+                        <p><strong><i class="fas fa-check-circle text-success"></i> Ventajas:</strong></p>
+                        <ul>
+                            ${caracteristicas.ventajas.map(v => `<li>${v}</li>`).join('')}
+                        </ul>
+                        <p><strong><i class="fas fa-times-circle text-danger"></i> Desventajas:</strong></p>
+                        <ul>
+                            ${caracteristicas.desventajas.map(d => `<li>${d}</li>`).join('')}
+                        </ul>
+                        <p><strong><i class="fas fa-chart-line"></i> Tipo de convergencia:</strong> ${caracteristicas.convergencia}</p>
+                        <p><strong><i class="fas fa-thumbs-up"></i> Mejor uso:</strong> ${caracteristicas.mejor_uso}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        index++;
+    }
+    
+    caracteristicasHTML += `</div>`;
+    document.getElementById('comparacionCaracteristicas').innerHTML = caracteristicasHTML;
+}
+
+function mostrarErrorComparacion(mensaje) {
+    document.getElementById('comparacionResultados').style.display = 'none';
+    document.getElementById('comparacionError').style.display = 'block';
+    document.getElementById('comparacionMensajeError').textContent = mensaje;
+}
+
+function limpiarComparacion() {
+    document.getElementById('comparacionForm').reset();
+    document.getElementById('comparacionResultados').style.display = 'none';
+    document.getElementById('comparacionError').style.display = 'none';
+}
+
+function cargarEjemploComparacion1() {
+    // Ejemplo 1: f(x) = x^3 - 2x - 5
+    document.getElementById('comp_funcion').value = 'x**3 - 2*x - 5';
+    document.getElementById('comp_x0').value = '2';
+    document.getElementById('comp_x1').value = '3';
+    document.getElementById('comp_xi').value = '2';
+    document.getElementById('comp_xs').value = '3';
+    document.getElementById('comp_funcion_g').value = '(2*x + 5)**(1/3)';
+    document.getElementById('comp_funcion_df').value = '3*x**2 - 2';
+    document.getElementById('comp_funcion_ddf').value = '6*x';
+    document.getElementById('comp_tolerancia').value = '0.0000001';
+    document.getElementById('comp_niter').value = '100';
+}
+
+function cargarEjemploComparacion2() {
+    // Ejemplo 2: f(x) = cos(x) - x
+    document.getElementById('comp_funcion').value = 'cos(x) - x';
+    document.getElementById('comp_x0').value = '0.5';
+    document.getElementById('comp_x1').value = '1';
+    document.getElementById('comp_xi').value = '0';
+    document.getElementById('comp_xs').value = '1';
+    document.getElementById('comp_funcion_g').value = 'cos(x)';
+    document.getElementById('comp_funcion_df').value = '-sin(x) - 1';
+    document.getElementById('comp_funcion_ddf').value = '-cos(x)';
+    document.getElementById('comp_tolerancia').value = '0.0000001';
+    document.getElementById('comp_niter').value = '100';
+}
