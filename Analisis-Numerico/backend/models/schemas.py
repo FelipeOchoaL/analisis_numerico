@@ -123,3 +123,17 @@ class TaylorResponse(BaseModel):
     errores: List[float]
     terminos_utilizados: int
     convergencia: bool
+
+# Modelos para Interpolación
+class VandermondeRequest(BaseModel):
+    x: List[float] = Field(..., description="Lista de valores x (hasta 8 puntos)")
+    y: List[float] = Field(..., description="Lista de valores y (hasta 8 puntos)")
+    grado: int = Field(..., ge=1, description="Grado del polinomio interpolante")
+
+class InterpolacionResponse(BaseModel):
+    exito: bool
+    polinomio: Optional[str] = None
+    grafico: Optional[str] = None
+    mensaje: str
+    coeficientes: Optional[List[float]] = None
+    grado: Optional[int] = None

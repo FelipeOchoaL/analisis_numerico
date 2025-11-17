@@ -7,7 +7,8 @@ from routers import (
     ecuaciones_no_lineales,
     errores,
     series_taylor,
-    sistemas_ecuaciones
+    sistemas_ecuaciones,
+    interpolacion
 )
 
 # Crear la aplicación FastAPI
@@ -51,6 +52,12 @@ app.include_router(
     sistemas_ecuaciones.router,
     prefix="/api/sistemas-ecuaciones",
     tags=["Sistemas de Ecuaciones"]
+)
+
+app.include_router(
+    interpolacion.router,
+    prefix="/api/interpolacion",
+    tags=["Interpolación"]
 )
 
 @app.get("/")
