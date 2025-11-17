@@ -90,21 +90,46 @@
     </nav>
 
     <div class="container my-5">
-        <div class="row">
-            <div class="col-md-12">
-                <h1 class="text-center mb-4">
-                    <i class="fas fa-matrix fa-2x text-warning"></i>
-                    <br>Sistemas de Ecuaciones Lineales
-                </h1>
-                <p class="text-center lead">Resolución usando eliminación de Gauss con pivoteo</p>
-            </div>
-        </div>
+        <h1 class="text-center mb-5">
+            <i class="fas fa-matrix"></i> Sistemas de Ecuaciones Lineales
+        </h1>
 
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card shadow">
+        <!-- Tabs para diferentes métodos -->
+        <ul class="nav nav-tabs" id="metodosTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="gauss-tab" data-bs-toggle="tab" data-bs-target="#gauss" type="button">
+                    <i class="fas fa-cogs"></i> Eliminación de Gauss
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="jacobi-tab" data-bs-toggle="tab" data-bs-target="#jacobi" type="button">
+                    <i class="fas fa-sync-alt"></i> Jacobi
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="gauss-seidel-tab" data-bs-toggle="tab" data-bs-target="#gauss-seidel" type="button">
+                    <i class="fas fa-arrows-alt-h"></i> Gauss-Seidel
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sor-tab" data-bs-toggle="tab" data-bs-target="#sor" type="button">
+                    <i class="fas fa-rocket"></i> SOR
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="comparacion-tab" data-bs-toggle="tab" data-bs-target="#comparacion" type="button">
+                    <i class="fas fa-chart-bar"></i> Comparación
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="metodosTabContent">
+            <!-- Método de Eliminación de Gauss -->
+            <div class="tab-pane fade show active" id="gauss" role="tabpanel">
+                <div class="card mt-3 shadow">
                     <div class="card-header bg-warning text-dark">
-                        <h5><i class="fas fa-cogs"></i> Método de Eliminación de Gauss</h5>
+                        <h5><i class="fas fa-cogs"></i> Método de Eliminación de Gauss con Pivoteo</h5>
+                        <small>Método directo para resolución de sistemas lineales</small>
                     </div>
                     <div class="card-body">
                         <!-- Configuración del tamaño del sistema -->
@@ -246,6 +271,239 @@
                             <strong>Nota:</strong> Ingrese números decimales usando punto (.) como separador. 
                             El sistema debe ser cuadrado (mismo número de ecuaciones que incógnitas).
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            </div>
+
+            <!-- Método de Jacobi -->
+            <div class="tab-pane fade" id="jacobi" role="tabpanel">
+                <div class="card mt-3 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-sync-alt"></i> Método Iterativo de Jacobi</h5>
+                        <small>Converge si la matriz es diagonalmente dominante</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Requisitos:</strong> Matriz cuadrada. Converge si ρ(T) < 1.
+                            Mejor para matrices grandes y dispersas con diagonal dominante.
+                        </div>
+                        <form id="jacobiForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tamaño del sistema (n x n):</label>
+                                    <select class="form-select" id="jacobi_dimension" onchange="generarMatrizIterativa('jacobi')">
+                                        <option value="2">2x2</option>
+                                        <option value="3" selected>3x3</option>
+                                        <option value="4">4x4</option>
+                                        <option value="5">5x5</option>
+                                        <option value="6">6x6</option>
+                                        <option value="7">7x7</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Modo de error:</label>
+                                    <select class="form-select" id="jacobi_modo">
+                                        <option value="absoluto" selected>Absoluto</option>
+                                        <option value="relativo">Relativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="jacobi_matriz_container" class="mb-3"></div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tolerancia:</label>
+                                    <input type="number" class="form-control" id="jacobi_tolerancia" value="0.0001" step="any">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Iteraciones máximas:</label>
+                                    <input type="number" class="form-control" id="jacobi_niter" value="100" min="1">
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                <button type="button" class="btn btn-secondary" onclick="cargarEjemploIterativo('jacobi', 'ejemplo1')">Ejemplo 1</button>
+                                <button type="button" class="btn btn-secondary" onclick="cargarEjemploIterativo('jacobi', 'ejemplo2')">Ejemplo 2</button>
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-play"></i> Resolver</button>
+                            </div>
+                        </form>
+                        <div id="jacobi_resultado" class="mt-4" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Gauss-Seidel -->
+            <div class="tab-pane fade" id="gauss-seidel" role="tabpanel">
+                <div class="card mt-3 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-arrows-alt-h"></i> Método Iterativo de Gauss-Seidel</h5>
+                        <small>Generalmente converge más rápido que Jacobi</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <strong>Ventajas:</strong> Más rápido que Jacobi para matrices simétricas y definidas positivas.
+                            Usa valores actualizados inmediatamente.
+                        </div>
+                        <form id="gaussSeidelForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tamaño del sistema (n x n):</label>
+                                    <select class="form-select" id="gs_dimension" onchange="generarMatrizIterativa('gs')">
+                                        <option value="2">2x2</option>
+                                        <option value="3" selected>3x3</option>
+                                        <option value="4">4x4</option>
+                                        <option value="5">5x5</option>
+                                        <option value="6">6x6</option>
+                                        <option value="7">7x7</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Modo de error:</label>
+                                    <select class="form-select" id="gs_modo">
+                                        <option value="absoluto" selected>Absoluto</option>
+                                        <option value="relativo">Relativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="gs_matriz_container" class="mb-3"></div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tolerancia:</label>
+                                    <input type="number" class="form-control" id="gs_tolerancia" value="0.0001" step="any">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Iteraciones máximas:</label>
+                                    <input type="number" class="form-control" id="gs_niter" value="100" min="1">
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                <button type="button" class="btn btn-secondary" onclick="cargarEjemploIterativo('gs', 'ejemplo1')">Ejemplo 1</button>
+                                <button type="button" class="btn btn-secondary" onclick="cargarEjemploIterativo('gs', 'ejemplo2')">Ejemplo 2</button>
+                                <button type="submit" class="btn btn-success"><i class="fas fa-play"></i> Resolver</button>
+                            </div>
+                        </form>
+                        <div id="gs_resultado" class="mt-4" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método SOR -->
+            <div class="tab-pane fade" id="sor" role="tabpanel">
+                <div class="card mt-3 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5><i class="fas fa-rocket"></i> Método SOR (Sobre-Relajación Sucesiva)</h5>
+                        <small>Acelera la convergencia con el parámetro ω adecuado</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <strong>Parámetro ω:</strong> 
+                            • ω = 1: Equivale a Gauss-Seidel
+                            • ω < 1: Sub-relajación
+                            • ω > 1: Sobre-relajación (acelera si se elige bien)
+                            • Rango válido: 0 < ω < 2
+                        </div>
+                        <form id="sorForm">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Tamaño del sistema:</label>
+                                    <select class="form-select" id="sor_dimension" onchange="generarMatrizIterativa('sor')">
+                                        <option value="2">2x2</option>
+                                        <option value="3" selected>3x3</option>
+                                        <option value="4">4x4</option>
+                                        <option value="5">5x5</option>
+                                        <option value="6">6x6</option>
+                                        <option value="7">7x7</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Parámetro ω (omega):</label>
+                                    <input type="number" class="form-control" id="sor_omega" value="1.5" step="0.1" min="0.1" max="1.9">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Modo de error:</label>
+                                    <select class="form-select" id="sor_modo">
+                                        <option value="absoluto" selected>Absoluto</option>
+                                        <option value="relativo">Relativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="sor_matriz_container" class="mb-3"></div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tolerancia:</label>
+                                    <input type="number" class="form-control" id="sor_tolerancia" value="0.0001" step="any">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Iteraciones máximas:</label>
+                                    <input type="number" class="form-control" id="sor_niter" value="100" min="1">
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                <button type="button" class="btn btn-secondary" onclick="cargarEjemploIterativo('sor', 'ejemplo1')">Ejemplo 1</button>
+                                <button type="button" class="btn btn-secondary" onclick="cargarEjemploIterativo('sor', 'ejemplo2')">Ejemplo 2</button>
+                                <button type="submit" class="btn btn-danger"><i class="fas fa-play"></i> Resolver</button>
+                            </div>
+                        </form>
+                        <div id="sor_resultado" class="mt-4" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparación de Métodos Iterativos -->
+            <div class="tab-pane fade" id="comparacion" role="tabpanel">
+                <div class="card mt-3 border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-chart-bar"></i> Comparación de Métodos Iterativos</h5>
+                        <small>Ejecuta Jacobi, Gauss-Seidel y SOR simultáneamente</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Informe Comparativo:</strong> Este módulo ejecuta los tres métodos iterativos con los mismos datos
+                            y genera un análisis completo con tiempos, iteraciones, convergencia y recomendaciones.
+                        </div>
+                        <form id="comparacionForm">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Tamaño del sistema:</label>
+                                    <select class="form-select" id="comp_dimension" onchange="generarMatrizIterativa('comp')">
+                                        <option value="2">2x2</option>
+                                        <option value="3" selected>3x3</option>
+                                        <option value="4">4x4</option>
+                                        <option value="5">5x5</option>
+                                        <option value="6">6x6</option>
+                                        <option value="7">7x7</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">ω para SOR:</label>
+                                    <input type="number" class="form-control" id="comp_omega" value="1.5" step="0.1" min="0.1" max="1.9">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Modo de error:</label>
+                                    <select class="form-select" id="comp_modo">
+                                        <option value="absoluto" selected>Absoluto</option>
+                                        <option value="relativo">Relativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="comp_matriz_container" class="mb-3"></div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tolerancia:</label>
+                                    <input type="number" class="form-control" id="comp_tolerancia" value="0.0001" step="any">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Iteraciones máximas:</label>
+                                    <input type="number" class="form-control" id="comp_niter" value="100" min="1">
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                <button type="button" class="btn btn-secondary" onclick="cargarEjemploIterativo('comp', 'ejemplo1')">Ejemplo 1</button>
+                                <button type="button" class="btn btn-secondary" onclick="cargarEjemploIterativo('comp', 'ejemplo2')">Ejemplo 2</button>
+                                <button type="submit" class="btn btn-info"><i class="fas fa-play-circle"></i> Comparar Métodos</button>
+                            </div>
+                        </form>
+                        <div id="comp_resultado" class="mt-4" style="display: none;"></div>
                     </div>
                 </div>
             </div>

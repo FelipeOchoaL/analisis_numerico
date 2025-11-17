@@ -199,3 +199,53 @@ class ComparacionEcuacionesResponse(BaseModel):
     metodo_menos_iteraciones: Optional[str] = None
     total_metodos_exitosos: Optional[int] = None
     total_metodos_ejecutados: Optional[int] = None
+
+# Modelos para Sistemas de Ecuaciones - Métodos Iterativos
+class SistemaIterativoRequest(BaseModel):
+    A: List[List[float]] = Field(..., description="Matriz de coeficientes (n x n)")
+    b: List[float] = Field(..., description="Vector de términos independientes (n x 1)")
+    x0: List[float] = Field(..., description="Vector inicial para la iteración")
+    tolerancia: float = Field(1e-7, gt=0, description="Tolerancia de convergencia")
+    niter: int = Field(100, gt=0, description="Número máximo de iteraciones")
+    modo: str = Field("absoluto", description="Tipo de error: 'absoluto' o 'relativo'")
+
+class SORRequest(BaseModel):
+    A: List[List[float]] = Field(..., description="Matriz de coeficientes (n x n)")
+    b: List[float] = Field(..., description="Vector de términos independientes (n x 1)")
+    x0: List[float] = Field(..., description="Vector inicial para la iteración")
+    tolerancia: float = Field(1e-7, gt=0, description="Tolerancia de convergencia")
+    niter: int = Field(100, gt=0, description="Número máximo de iteraciones")
+    w: float = Field(1.5, gt=0, lt=2, description="Parámetro de relajación (0 < w < 2)")
+    modo: str = Field("absoluto", description="Tipo de error: 'absoluto' o 'relativo'")
+
+class SistemaIterativoResponse(BaseModel):
+    exito: bool
+    solucion: Optional[List[float]] = None
+    iteraciones: int
+    error_final: Optional[float] = None
+    radio_espectral: Optional[float] = None
+    tabla_html: Optional[str] = None
+    mensaje: str
+    errores: List[float] = []
+    converge_teorico: bool
+
+class ComparacionSistemasIterativosRequest(BaseModel):
+    A: List[List[float]] = Field(..., description="Matriz de coeficientes (n x n)")
+    b: List[float] = Field(..., description="Vector de términos independientes (n x 1)")
+    x0: List[float] = Field(..., description="Vector inicial para la iteración")
+    tolerancia: float = Field(1e-7, gt=0, description="Tolerancia de convergencia")
+    niter: int = Field(100, gt=0, description="Número máximo de iteraciones")
+    w: float = Field(1.5, gt=0, lt=2, description="Parámetro de relajación para SOR")
+    modo: str = Field("absoluto", description="Tipo de error: 'absoluto' o 'relativo'")
+
+class ComparacionSistemasIterativosResponse(BaseModel):
+    exito: bool
+    mensaje: str
+    resultados: Optional[dict] = None
+    informe: Optional[dict] = None
+    grafico_tiempos: Optional[str] = None
+    grafico_convergencia: Optional[str] = None
+    metodo_mas_rapido: Optional[str] = None
+    tiempo_mas_rapido: Optional[float] = None
+    metodo_menos_iteraciones: Optional[str] = None
+    total_metodos_exitosos: Optional[int] = None

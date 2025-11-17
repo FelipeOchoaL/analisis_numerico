@@ -2,7 +2,15 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import numpy as np
-from services.sistemas_service import GaussPiv, GaussPiv_verbose
+from services.sistemas_service import (
+    GaussPiv, GaussPiv_verbose,
+    jacobi, gauss_seidel, sor,
+    comparar_metodos_iterativos
+)
+from models.schemas import (
+    SistemaIterativoRequest, SORRequest, SistemaIterativoResponse,
+    ComparacionSistemasIterativosRequest, ComparacionSistemasIterativosResponse
+)
 
 router = APIRouter()
 
@@ -163,4 +171,125 @@ async def validar_sistema(sistema: MatrizSistema):
             status_code=400, 
             detail=f"Error al validar el sistema: {str(e)}"
         )
+
+@router.post("/jacobi", response_model=SistemaIterativoResponse)
+async def resolver_jacobi(sistema: SistemaIterativoRequest):
+    """
+    Resuelve un sistema de ecuaciones lineales usando el método iterativo de Jacobi
+    
+    - **A**: Matriz de coeficientes (n x n), preferiblemente diagonalmente dominante
+    - **b**: Vector de términos independientes
+    - **x0**: Vector inicial para comenzar la iteración
+    - **tolerancia**: Criterio de convergencia
+    - **niter**: Número máximo de iteraciones
+    - **modo**: Tipo de error ("absoluto" o "relativo")
+    
+    El método converge si el radio espectral de la matriz de iteración es < 1
+    """
+    try:
+        resultado = jacobi(
+            x0=sistema.x0,
+            A=sistema.A,
+            b=sistema.b,
+            tol=sistema.tolerancia,
+            niter=sistema.niter,
+            modo=sistema.modo
+        )
+        return SistemaIterativoResponse(**resultado)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error en Jacobi: {str(e)}")
+
+@router.post("/gauss-seidel", response_model=SistemaIterativoResponse)
+async def resolver_gauss_seidel(sistema: SistemaIterativoRequest):
+    """
+    Resuelve un sistema de ecuaciones lineales usando el método iterativo de Gauss-Seidel
+    
+    - **A**: Matriz de coeficientes (n x n), preferiblemente simétrica y definida positiva
+    - **b**: Vector de términos independientes
+    - **x0**: Vector inicial para comenzar la iteración
+    - **tolerancia**: Criterio de convergencia
+    - **niter**: Número máximo de iteraciones
+    - **modo**: Tipo de error ("absoluto" o "relativo")
+    
+    Generalmente converge más rápido que Jacobi si la matriz cumple las condiciones
+    """
+    try:
+        resultado = gauss_seidel(
+            x0=sistema.x0,
+            A=sistema.A,
+            b=sistema.b,
+            tol=sistema.tolerancia,
+            niter=sistema.niter,
+            modo=sistema.modo
+        )
+        return SistemaIterativoResponse(**resultado)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error en Gauss-Seidel: {str(e)}")
+
+@router.post("/sor", response_model=SistemaIterativoResponse)
+async def resolver_sor(sistema: SORRequest):
+    """
+    Resuelve un sistema de ecuaciones lineales usando el método SOR (Successive Over-Relaxation)
+    
+    - **A**: Matriz de coeficientes (n x n)
+    - **b**: Vector de términos independientes
+    - **x0**: Vector inicial para comenzar la iteración
+    - **tolerancia**: Criterio de convergencia
+    - **niter**: Número máximo de iteraciones
+    - **w**: Parámetro de relajación (0 < w < 2)
+        - w = 1: Equivale a Gauss-Seidel
+        - w < 1: Sub-relajación
+        - w > 1: Sobre-relajación (acelera convergencia si se elige bien)
+    - **modo**: Tipo de error ("absoluto" o "relativo")
+    
+    El parámetro w óptimo depende de las propiedades de la matriz
+    """
+    try:
+        resultado = sor(
+            x0=sistema.x0,
+            A=sistema.A,
+            b=sistema.b,
+            tol=sistema.tolerancia,
+            niter=sistema.niter,
+            w=sistema.w,
+            modo=sistema.modo
+        )
+        return SistemaIterativoResponse(**resultado)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error en SOR: {str(e)}")
+
+@router.post("/comparar-iterativos", response_model=ComparacionSistemasIterativosResponse)
+async def comparar_metodos_iterativos_endpoint(sistema: ComparacionSistemasIterativosRequest):
+    """
+    Compara los tres métodos iterativos (Jacobi, Gauss-Seidel y SOR) para el mismo sistema
+    
+    Ejecuta los tres métodos con los mismos parámetros y genera:
+    - Comparación de tiempos de ejecución
+    - Comparación de número de iteraciones
+    - Gráfico de evolución del error
+    - Análisis de convergencia (radio espectral)
+    - Recomendaciones sobre cuál método usar
+    
+    Parámetros:
+    - **A**: Matriz de coeficientes
+    - **b**: Vector de términos independientes
+    - **x0**: Vector inicial
+    - **tolerancia**: Criterio de convergencia
+    - **niter**: Número máximo de iteraciones
+    - **w**: Parámetro de relajación para SOR
+    - **modo**: Tipo de error
+    """
+    try:
+        resultado = comparar_metodos_iterativos(
+            A=sistema.A,
+            b=sistema.b,
+            x0=sistema.x0,
+            tol=sistema.tolerancia,
+            niter=sistema.niter,
+            w=sistema.w,
+            modo=sistema.modo
+        )
+        return ComparacionSistemasIterativosResponse(**resultado)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error en comparación: {str(e)}")
 

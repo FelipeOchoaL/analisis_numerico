@@ -200,6 +200,54 @@ def proxy_validar_sistema():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/sistemas/jacobi', methods=['POST'])
+def proxy_jacobi():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/sistemas-ecuaciones/jacobi",
+            json=request.json,
+            timeout=30
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sistemas/gauss-seidel', methods=['POST'])
+def proxy_gauss_seidel():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/sistemas-ecuaciones/gauss-seidel",
+            json=request.json,
+            timeout=30
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sistemas/sor', methods=['POST'])
+def proxy_sor():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/sistemas-ecuaciones/sor",
+            json=request.json,
+            timeout=30
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/sistemas/comparar-iterativos', methods=['POST'])
+def proxy_comparar_iterativos():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/sistemas-ecuaciones/comparar-iterativos",
+            json=request.json,
+            timeout=60  # Más tiempo porque ejecuta 3 métodos
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/vandermonde', methods=['POST'])
 def proxy_vandermonde():
     try:
