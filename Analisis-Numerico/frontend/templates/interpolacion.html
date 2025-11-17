@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpolación - Análisis Numérico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-calculator"></i> Análisis Numérico
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ecuaciones_no_lineales') }}">Ecuaciones No Lineales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('errores') }}">Cálculo de Errores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('series_taylor') }}">Series de Taylor</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('sistemas_ecuaciones') }}">Sistemas de Ecuaciones</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('interpolacion') }}">Interpolación</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h1 class="text-center mb-5">
+            <i class="fas fa-chart-line"></i> Capítulo 3 - Interpolación
+        </h1>
+
+        <div class="alert alert-info text-center" role="alert">
+            <h4><i class="fas fa-hammer"></i> Sección en Desarrollo</h4>
+            <p class="mb-0">Esta sección está siendo implementada. Pronto estará disponible con todas las funcionalidades.</p>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <h5><i class="fas fa-list"></i> Métodos de Interpolación a Implementar</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Esta sección incluirá los siguientes métodos de interpolación polinomial:</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card mb-3 h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-1"></i> Método de Vandermonde</h5>
+                                        <p class="card-text">
+                                            Utiliza una matriz de Vandermonde para encontrar el polinomio interpolante.
+                                            Resuelve un sistema de ecuaciones lineales para obtener los coeficientes del polinomio.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3 h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-2"></i> Newton Interpolante</h5>
+                                        <p class="card-text">
+                                            Utiliza diferencias divididas para construir el polinomio interpolante.
+                                            Más eficiente que Vandermonde para agregar puntos adicionales.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3 h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-3"></i> Método de Lagrange</h5>
+                                        <p class="card-text">
+                                            Construye el polinomio interpolante como una combinación lineal de polinomios base de Lagrange.
+                                            Fácil de implementar y entender conceptualmente.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3 h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-4"></i> Spline Lineal</h5>
+                                        <p class="card-text">
+                                            Conecta puntos con segmentos de línea recta.
+                                            Simple pero puede tener discontinuidades en las derivadas.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mx-auto">
+                                <div class="card mb-3 h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="fas fa-5"></i> Spline Cúbico</h5>
+                                        <p class="card-text">
+                                            Utiliza polinomios de tercer grado entre cada par de puntos.
+                                            Proporciona interpolación suave con derivadas continuas hasta segundo orden.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-chart-bar"></i> Funcionalidades Planificadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success"></i> 
+                                <strong>Entrada de Datos:</strong> Interfaz intuitiva para ingresar hasta 8 pares de puntos (x, y)
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success"></i> 
+                                <strong>Visualización:</strong> Gráficos interactivos que muestran los puntos datos y el polinomio interpolante
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success"></i> 
+                                <strong>Polinomio Solución:</strong> Impresión del polinomio interpolante en formato legible
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success"></i> 
+                                <strong>Informe Automático:</strong> Comparación de todos los métodos con análisis de errores
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success"></i> 
+                                <strong>Análisis de Errores:</strong> Cálculo de diferentes tipos de errores para identificar el mejor método
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success"></i> 
+                                <strong>Opción de Informe:</strong> El usuario puede elegir si ejecutar o no el informe comparativo
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-keyboard"></i> Cómo Ingresar los Datos</h5>
+                        <p>Cuando la interfaz esté lista, podrás ingresar los datos de las siguientes maneras:</p>
+                        <ol>
+                            <li><strong>Tabla Interactiva:</strong> Una tabla donde puedes agregar hasta 8 pares de valores (x, y)</li>
+                            <li><strong>Botones de Agregar/Eliminar:</strong> Controles para añadir o quitar puntos fácilmente</li>
+                            <li><strong>Validación Automática:</strong> El sistema verificará que los datos sean válidos antes de procesarlos</li>
+                            <li><strong>Ejemplo Pre-cargado:</strong> Datos de ejemplo para probar rápidamente los métodos</li>
+                        </ol>
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            <strong>Nota:</strong> Los valores de x deben ser distintos entre sí para que la interpolación sea válida.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2024 Análisis Numérico - Proyecto de API</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

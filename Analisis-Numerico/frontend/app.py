@@ -27,6 +27,10 @@ def series_taylor():
 def sistemas_ecuaciones():
     return render_template('sistemas_ecuaciones.html')
 
+@app.route('/interpolacion')
+def interpolacion():
+    return render_template('interpolacion.html')
+
 # Rutas proxy para comunicarse con la API
 @app.route('/api/biseccion', methods=['POST'])
 def proxy_biseccion():

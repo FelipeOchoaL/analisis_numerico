@@ -31,6 +31,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('sistemas_ecuaciones') }}">Sistemas de Ecuaciones</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('interpolacion') }}">Interpolación</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -103,6 +106,27 @@
                             <br>• Análisis de estabilidad
                         </p>
                         <a href="{{ url_for('sistemas_ecuaciones') }}" class="btn btn-warning">Acceder</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card h-100 shadow-sm border-danger">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-3x text-danger mb-3"></i>
+                        <h5 class="card-title">Capítulo 3 - Interpolación</h5>
+                        <p class="card-text">
+                            Métodos de interpolación polinomial:
+                            <br>• Vandermonde
+                            <br>• Newton Interpolante
+                            <br>• Lagrange
+                            <br>• Spline Lineal
+                            <br>• Spline Cúbico
+                            <br>• Informe automático de comparación de métodos
+                        </p>
+                        <a href="{{ url_for('interpolacion') }}" class="btn btn-danger">Acceder</a>
                     </div>
                 </div>
             </div>
