@@ -212,5 +212,29 @@ def proxy_vandermonde():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/newton', methods=['POST'])
+def proxy_newton():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/interpolacion/newton",
+            json=request.json,
+            timeout=30
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/lagrange', methods=['POST'])
+def proxy_lagrange():
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/interpolacion/lagrange",
+            json=request.json,
+            timeout=30
+        )
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=3000)

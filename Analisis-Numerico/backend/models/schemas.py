@@ -130,6 +130,14 @@ class VandermondeRequest(BaseModel):
     y: List[float] = Field(..., description="Lista de valores y (hasta 8 puntos)")
     grado: int = Field(..., ge=1, description="Grado del polinomio interpolante")
 
+class NewtonRequest(BaseModel):
+    x: List[float] = Field(..., description="Lista de valores x (hasta 8 puntos)")
+    y: List[float] = Field(..., description="Lista de valores y (hasta 8 puntos)")
+
+class LagrangeRequest(BaseModel):
+    x: List[float] = Field(..., description="Lista de valores x (hasta 8 puntos)")
+    y: List[float] = Field(..., description="Lista de valores y (hasta 8 puntos)")
+
 class InterpolacionResponse(BaseModel):
     exito: bool
     polinomio: Optional[str] = None

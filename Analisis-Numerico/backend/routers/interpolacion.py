@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from models.schemas import VandermondeRequest, InterpolacionResponse
+from models.schemas import VandermondeRequest, NewtonRequest, LagrangeRequest, InterpolacionResponse
 from services.interpolacion_service import InterpolacionService
 import time
 
@@ -56,6 +56,132 @@ async def interpolar_vandermonde(request: VandermondeRequest):
             x=request.x,
             y=request.y,
             grado=request.grado
+        )
+        end_time = time.time()
+        
+        # Agregar tiempo de ejecución al mensaje si fue exitoso
+        if resultado["exito"]:
+            tiempo = end_time - start_time
+            resultado["mensaje"] += f" (Tiempo de ejecución: {tiempo:.6f} segundos)"
+        
+        return resultado
+    
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
+@router.post("/newton", response_model=InterpolacionResponse)
+async def interpolar_newton(request: NewtonRequest):
+    """
+    Interpolación polinomial usando el método de Newton (Diferencias Divididas).
+    
+    El método de Newton utiliza diferencias divididas para construir el polinomio
+    interpolante de manera eficiente. Es más estable numéricamente que Vandermonde
+    y permite agregar nuevos puntos de manera incremental.
+    
+    **Parámetros:**
+    - **x**: Lista de valores x (hasta 8 puntos). Los valores deben ser únicos.
+    - **y**: Lista de valores y correspondientes (mismo tamaño que x).
+    
+    **Retorna:**
+    - Polinomio interpolante en formato legible
+    - Gráfico con los puntos y el polinomio
+    - Coeficientes del polinomio
+    - Tabla de diferencias divididas
+    
+    **Ventajas:**
+    - Más estable numéricamente que Vandermonde
+    - Permite agregar puntos nuevos sin recalcular todo
+    - No requiere especificar el grado (usa todos los puntos)
+    
+    **Notas:**
+    - Los valores de x deben ser distintos entre sí
+    - El grado del polinomio será len(x) - 1
+    - El polinomio pasa exactamente por todos los puntos dados
+    """
+    try:
+        # Validación básica
+        if len(request.x) > 8:
+            raise HTTPException(
+                status_code=400,
+                detail="Se permiten máximo 8 puntos para interpolación"
+            )
+        
+        if len(request.x) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="Se necesitan al menos 2 puntos para interpolación"
+            )
+        
+        # Ejecutar el método de Newton
+        start_time = time.time()
+        resultado = service.newton_interpolante(
+            x=request.x,
+            y=request.y
+        )
+        end_time = time.time()
+        
+        # Agregar tiempo de ejecución al mensaje si fue exitoso
+        if resultado["exito"]:
+            tiempo = end_time - start_time
+            resultado["mensaje"] += f" (Tiempo de ejecución: {tiempo:.6f} segundos)"
+        
+        return resultado
+    
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
+@router.post("/lagrange", response_model=InterpolacionResponse)
+async def interpolar_lagrange(request: LagrangeRequest):
+    """
+    Interpolación polinomial usando el método de Lagrange.
+    
+    El método de Lagrange construye el polinomio interpolante como una combinación
+    lineal de polinomios base de Lagrange. Es conceptualmente más simple que otros
+    métodos y tiene propiedades matemáticas elegantes.
+    
+    **Parámetros:**
+    - **x**: Lista de valores x (hasta 8 puntos). Los valores deben ser únicos.
+    - **y**: Lista de valores y correspondientes (mismo tamaño que x).
+    
+    **Retorna:**
+    - Polinomio interpolante en formato legible
+    - Gráfico con los puntos y el polinomio
+    - Coeficientes del polinomio
+    
+    **Ventajas:**
+    - Conceptualmente simple y elegante
+    - Fácil de entender y programar
+    - No requiere especificar el grado (usa todos los puntos)
+    - Buena estabilidad numérica
+    
+    **Notas:**
+    - Los valores de x deben ser distintos entre sí
+    - El grado del polinomio será len(x) - 1
+    - El polinomio pasa exactamente por todos los puntos dados
+    """
+    try:
+        # Validación básica
+        if len(request.x) > 8:
+            raise HTTPException(
+                status_code=400,
+                detail="Se permiten máximo 8 puntos para interpolación"
+            )
+        
+        if len(request.x) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="Se necesitan al menos 2 puntos para interpolación"
+            )
+        
+        # Ejecutar el método de Lagrange
+        start_time = time.time()
+        resultado = service.lagrange(
+            x=request.x,
+            y=request.y
         )
         end_time = time.time()
         

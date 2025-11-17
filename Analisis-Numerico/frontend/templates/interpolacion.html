@@ -67,13 +67,13 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link disabled" id="newton-tab" type="button">
-                    <i class="fas fa-calculator"></i> Newton (Próximamente)
+                <button class="nav-link" id="newton-tab" data-bs-toggle="tab" data-bs-target="#newton" type="button">
+                    <i class="fas fa-calculator"></i> Newton
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link disabled" id="lagrange-tab" type="button">
-                    <i class="fas fa-project-diagram"></i> Lagrange (Próximamente)
+                <button class="nav-link" id="lagrange-tab" data-bs-toggle="tab" data-bs-target="#lagrange" type="button">
+                    <i class="fas fa-project-diagram"></i> Lagrange
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -236,6 +236,304 @@
                         <!-- Loading -->
                         <div id="loading" class="text-center mt-4" style="display: none;">
                             <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Calculando...</span>
+                            </div>
+                            <p class="mt-2">Calculando interpolación...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Newton -->
+            <div class="tab-pane fade" id="newton" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-calculator"></i> Método de Newton (Diferencias Divididas)</h5>
+                        <small>Interpolación usando diferencias divididas de Newton</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Instrucciones:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Ingresa al menos 2 puntos (x, y) y máximo 8 puntos</li>
+                                <li>Los valores de x deben ser únicos (no repetidos)</li>
+                                <li>El método automáticamente usará todos los puntos (grado = n - 1)</li>
+                                <li>Newton es más estable numéricamente que Vandermonde</li>
+                            </ul>
+                        </div>
+
+                        <form id="newtonForm">
+                            <!-- Tabla de puntos -->
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Puntos de Interpolación</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered text-center" id="puntosTableNewton">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>x</th>
+                                                    <th>y</th>
+                                                    <th>Acción</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="puntosBodyNewton">
+                                                <!-- Los puntos se agregarán aquí dinámicamente -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <button type="button" class="btn btn-success btn-sm" id="addPuntoNewtonBtn">
+                                            <i class="fas fa-plus"></i> Agregar Punto
+                                        </button>
+                                        <span class="text-muted" id="puntosCountNewton">Puntos: 0/8</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ejemplos rápidos -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Ejemplos Rápidos:</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploNewtonLineal()">
+                                            Lineal
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploNewtonCuadratico()">
+                                            Cuadrático
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploNewtonCubico()">
+                                            Cúbico
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-play"></i> Calcular Interpolación (Newton)
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="limpiarFormularioNewton()">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Resultados -->
+                        <div id="resultadoNewton" class="mt-4" style="display: none;">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-check-circle"></i> Resultados</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Polinomio -->
+                                    <div class="mb-3">
+                                        <h6><i class="fas fa-function"></i> Polinomio Interpolante:</h6>
+                                        <div class="alert alert-light border">
+                                            <code id="polinomioResultadoNewton" style="font-size: 1.1em; color: #198754;"></code>
+                                        </div>
+                                    </div>
+
+                                    <!-- Gráfico -->
+                                    <div class="mb-3">
+                                        <h6><i class="fas fa-chart-area"></i> Gráfico:</h6>
+                                        <div class="text-center">
+                                            <img id="graficoResultadoNewton" class="img-fluid border rounded" alt="Gráfico de interpolación">
+                                        </div>
+                                    </div>
+
+                                    <!-- Información adicional -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Información</h6>
+                                                    <p class="mb-1"><strong>Grado:</strong> <span id="gradoInfoNewton"></span></p>
+                                                    <p class="mb-0"><strong>Mensaje:</strong> <span id="mensajeInfoNewton"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Coeficientes</h6>
+                                                    <div id="coeficientesInfoNewton" style="max-height: 150px; overflow-y: auto;">
+                                                        <!-- Los coeficientes se mostrarán aquí -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Área de errores -->
+                        <div id="errorDivNewton" class="mt-4" style="display: none;">
+                            <div class="alert alert-danger">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Error</h6>
+                                <p id="errorMensajeNewton" class="mb-0"></p>
+                            </div>
+                            <div id="errorGraficoNewton" class="text-center" style="display: none;">
+                                <img id="graficoErrorNewton" class="img-fluid border rounded" alt="Gráfico de error">
+                            </div>
+                        </div>
+
+                        <!-- Loading -->
+                        <div id="loadingNewton" class="text-center mt-4" style="display: none;">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Calculando...</span>
+                            </div>
+                            <p class="mt-2">Calculando interpolación...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Lagrange -->
+            <div class="tab-pane fade" id="lagrange" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-project-diagram"></i> Método de Lagrange</h5>
+                        <small>Interpolación usando polinomios base de Lagrange</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Instrucciones:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Ingresa al menos 2 puntos (x, y) y máximo 8 puntos</li>
+                                <li>Los valores de x deben ser únicos (no repetidos)</li>
+                                <li>El método construye polinomios base Li(x) para cada punto</li>
+                                <li>Conceptualmente simple y matemáticamente elegante</li>
+                            </ul>
+                        </div>
+
+                        <form id="lagrangeForm">
+                            <!-- Tabla de puntos -->
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Puntos de Interpolación</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered text-center" id="puntosTableLagrange">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>x</th>
+                                                    <th>y</th>
+                                                    <th>Acción</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="puntosBodyLagrange">
+                                                <!-- Los puntos se agregarán aquí dinámicamente -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <button type="button" class="btn btn-primary btn-sm" id="addPuntoLagrangeBtn">
+                                            <i class="fas fa-plus"></i> Agregar Punto
+                                        </button>
+                                        <span class="text-muted" id="puntosCountLagrange">Puntos: 0/8</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ejemplos rápidos -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Ejemplos Rápidos:</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploLagrangeLineal()">
+                                            Lineal
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploLagrangeCuadratico()">
+                                            Cuadrático
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cargarEjemploLagrangeCubico()">
+                                            Cúbico
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-play"></i> Calcular Interpolación (Lagrange)
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="limpiarFormularioLagrange()">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Resultados -->
+                        <div id="resultadoLagrange" class="mt-4" style="display: none;">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-check-circle"></i> Resultados</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Polinomio -->
+                                    <div class="mb-3">
+                                        <h6><i class="fas fa-function"></i> Polinomio Interpolante:</h6>
+                                        <div class="alert alert-light border">
+                                            <code id="polinomioResultadoLagrange" style="font-size: 1.1em; color: #0d6efd;"></code>
+                                        </div>
+                                    </div>
+
+                                    <!-- Gráfico -->
+                                    <div class="mb-3">
+                                        <h6><i class="fas fa-chart-area"></i> Gráfico:</h6>
+                                        <div class="text-center">
+                                            <img id="graficoResultadoLagrange" class="img-fluid border rounded" alt="Gráfico de interpolación">
+                                        </div>
+                                    </div>
+
+                                    <!-- Información adicional -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Información</h6>
+                                                    <p class="mb-1"><strong>Grado:</strong> <span id="gradoInfoLagrange"></span></p>
+                                                    <p class="mb-0"><strong>Mensaje:</strong> <span id="mensajeInfoLagrange"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Coeficientes</h6>
+                                                    <div id="coeficientesInfoLagrange" style="max-height: 150px; overflow-y: auto;">
+                                                        <!-- Los coeficientes se mostrarán aquí -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Área de errores -->
+                        <div id="errorDivLagrange" class="mt-4" style="display: none;">
+                            <div class="alert alert-danger">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Error</h6>
+                                <p id="errorMensajeLagrange" class="mb-0"></p>
+                            </div>
+                            <div id="errorGraficoLagrange" class="text-center" style="display: none;">
+                                <img id="graficoErrorLagrange" class="img-fluid border rounded" alt="Gráfico de error">
+                            </div>
+                        </div>
+
+                        <!-- Loading -->
+                        <div id="loadingLagrange" class="text-center mt-4" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Calculando...</span>
                             </div>
                             <p class="mt-2">Calculando interpolación...</p>
